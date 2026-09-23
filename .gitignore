@@ -19,3 +19,4 @@ __pycache__/
 *.pth
 *.npz
 !/benchmarks/goldens/**/*.npz
+target/

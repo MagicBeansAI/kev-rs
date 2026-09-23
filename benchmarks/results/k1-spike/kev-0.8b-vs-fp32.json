@@ -1,0 +1,180 @@
+{
+  "results": [
+    {
+      "fixture": "bench-m5",
+      "reference": "torch-fp32",
+      "max_abs_dp": 0.0038552284240722656,
+      "max_abs_dlogit_raw": 0.03688880801200867,
+      "argmax_flips": 0,
+      "questions": 5
+    },
+    {
+      "fixture": "choice-1",
+      "reference": "torch-fp32",
+      "max_abs_dp": 0.0,
+      "max_abs_dlogit_raw": 0.001991957426071167,
+      "argmax_flips": 0,
+      "questions": 1
+    },
+    {
+      "fixture": "choice-26",
+      "reference": "torch-fp32",
+      "max_abs_dp": 0.0007176473736763,
+      "max_abs_dlogit_raw": 0.05185556411743164,
+      "argmax_flips": 0,
+      "questions": 1
+    },
+    {
+      "fixture": "choice-3",
+      "reference": "torch-fp32",
+      "max_abs_dp": 0.003284931182861328,
+      "max_abs_dlogit_raw": 0.07736408710479736,
+      "argmax_flips": 0,
+      "questions": 1
+    },
+    {
+      "fixture": "empty-state",
+      "reference": "torch-fp32",
+      "max_abs_dp": 0.004082918167114258,
+      "max_abs_dlogit_raw": 0.0316368043422699,
+      "argmax_flips": 0,
+      "questions": 1
+    },
+    {
+      "fixture": "escape-options",
+      "reference": "torch-fp32",
+      "max_abs_dp": 0.004246532917022705,
+      "max_abs_dlogit_raw": 0.029813528060913086,
+      "argmax_flips": 0,
+      "questions": 1
+    },
+    {
+      "fixture": "escape-state",
+      "reference": "torch-fp32",
+      "max_abs_dp": 0.002491503953933716,
+      "max_abs_dlogit_raw": 0.03890982270240784,
+      "argmax_flips": 0,
+      "questions": 1
+    },
+    {
+      "fixture": "list-state",
+      "reference": "torch-fp32",
+      "max_abs_dp": 0.0023047924041748047,
+      "max_abs_dlogit_raw": 0.01912248134613037,
+      "argmax_flips": 1,
+      "questions": 1
+    },
+    {
+      "fixture": "long-state",
+      "reference": "torch-fp32",
+      "max_abs_dp": 0.0015448331832885742,
+      "max_abs_dlogit_raw": 0.08367472887039185,
+      "argmax_flips": 0,
+      "questions": 1
+    },
+    {
+      "fixture": "mixed-packed-3",
+      "reference": "torch-fp32",
+      "max_abs_dp": 0.005164206027984619,
+      "max_abs_dlogit_raw": 0.07736408710479736,
+      "argmax_flips": 0,
+      "questions": 3
+    },
+    {
+      "fixture": "noul-basic",
+      "reference": "torch-fp32",
+      "max_abs_dp": 0.005164027214050293,
+      "max_abs_dlogit_raw": 0.05096268653869629,
+      "argmax_flips": 0,
+      "questions": 1
+    },
+    {
+      "fixture": "noul-criteria",
+      "reference": "torch-fp32",
+      "max_abs_dp": 0.00413435697555542,
+      "max_abs_dlogit_raw": 0.03516232967376709,
+      "argmax_flips": 0,
+      "questions": 1
+    },
+    {
+      "fixture": "null-state",
+      "reference": "torch-fp32",
+      "max_abs_dp": 0.004082918167114258,
+      "max_abs_dlogit_raw": 0.0316368043422699,
+      "argmax_flips": 0,
+      "questions": 1
+    },
+    {
+      "fixture": "object-state",
+      "reference": "torch-fp32",
+      "max_abs_dp": 0.0027740374207496643,
+      "max_abs_dlogit_raw": 0.07494461536407471,
+      "argmax_flips": 0,
+      "questions": 1
+    },
+    {
+      "fixture": "repeat-mixed",
+      "reference": "torch-fp32",
+      "max_abs_dp": 0.005164206027984619,
+      "max_abs_dlogit_raw": 0.07736408710479736,
+      "argmax_flips": 0,
+      "questions": 3
+    },
+    {
+      "fixture": "scalar-state",
+      "reference": "torch-fp32",
+      "max_abs_dp": 0.002907991409301758,
+      "max_abs_dlogit_raw": 0.03867518901824951,
+      "argmax_flips": 0,
+      "questions": 1
+    },
+    {
+      "fixture": "score-3",
+      "reference": "torch-fp32",
+      "max_abs_dp": 0.0019554197788238525,
+      "max_abs_dlogit_raw": 0.024866223335266113,
+      "argmax_flips": 0,
+      "questions": 1
+    },
+    {
+      "fixture": "score-5",
+      "reference": "torch-fp32",
+      "max_abs_dp": 0.001858443021774292,
+      "max_abs_dlogit_raw": 0.036765098571777344,
+      "argmax_flips": 0,
+      "questions": 1
+    },
+    {
+      "fixture": "separate-review",
+      "reference": "torch-fp32",
+      "max_abs_dp": 0.005164027214050293,
+      "max_abs_dlogit_raw": 0.05096268653869629,
+      "argmax_flips": 0,
+      "questions": 1
+    },
+    {
+      "fixture": "separate-route",
+      "reference": "torch-fp32",
+      "max_abs_dp": 0.003284931182861328,
+      "max_abs_dlogit_raw": 0.07736408710479736,
+      "argmax_flips": 0,
+      "questions": 1
+    },
+    {
+      "fixture": "separate-urgency",
+      "reference": "torch-fp32",
+      "max_abs_dp": 0.0019554197788238525,
+      "max_abs_dlogit_raw": 0.024866223335266113,
+      "argmax_flips": 0,
+      "questions": 1
+    },
+    {
+      "fixture": "unicode-state",
+      "reference": "torch-fp32",
+      "max_abs_dp": 0.003968715667724609,
+      "max_abs_dlogit_raw": 0.03704547882080078,
+      "argmax_flips": 0,
+      "questions": 1
+    }
+  ]
+}

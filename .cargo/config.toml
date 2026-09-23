@@ -1,0 +1,8 @@
+# Build-time environment for the mlx backend, matching laya-rs exactly: both
+# values are read by the patched mlx-sys build script. MLX_RS_METAL_PATH keeps
+# the residual metallib isolated per checkout instead of sharing ~/.mlx/lib
+# across deployment targets.
+[env]
+MLX_RS_METAL_JIT = "1"
+MACOSX_DEPLOYMENT_TARGET = "14.0"
+MLX_RS_METAL_PATH = { value = "target/mlx-metal", relative = true }

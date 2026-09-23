@@ -12,7 +12,10 @@ calibration. It has two backends:
 - **MLX** on Apple Silicon (via `mlx-rs`): required on macOS, mirroring
   upstream's own MLX path for the Qwen3.5 hybrid backbone.
 
-Status: **K0 (baseline and goldens) in progress.** No Rust runtime exists yet.
+Status: **K0 complete (baseline, goldens, frozen gates); K1 runtime spike
+complete** (`docs/K1-RUNTIME.md`): Metal = mlx-rs port (parity proven on
+kev-0.8b and kev-4b against the K0 goldens), CPU = llama.cpp (llama-cpp-2
+0.1.156, parity pending at K2). `kev-core` does not exist yet.
 
 ## Upstream pin
 

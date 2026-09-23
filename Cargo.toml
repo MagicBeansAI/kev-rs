@@ -1,0 +1,20 @@
+[workspace]
+resolver = "2"
+members = ["crates/*"]
+exclude = ["spikes/*"]
+
+[workspace.package]
+edition = "2021"
+license = "Apache-2.0"
+repository = "https://github.com/codesoda/kev-rs"
+
+# kev-metal and laya-metal must link into one binary, so kev-rs carries no
+# vendored mlx-sys of its own: it pins the same patched copy (JIT Metal build,
+# deployment-target override) laya-rs vendors and systemone already patches at
+# this exact revision. Cargo does not propagate a dependency's [patch] table;
+# every consumer must repeat this pin.
+[patch.crates-io]
+mlx-sys = { git = "https://github.com/codesoda/laya-rs.git", rev = "23fff422666fd5039998fd8a55ca57f7e40d224b" }
+
+[profile.release]
+debug = 1

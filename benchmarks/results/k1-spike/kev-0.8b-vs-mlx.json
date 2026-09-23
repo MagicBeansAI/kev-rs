@@ -1,0 +1,180 @@
+{
+  "results": [
+    {
+      "fixture": "bench-m5",
+      "reference": "mlx",
+      "max_abs_dp": 0.009354174137115479,
+      "max_abs_dlogit_raw": 0.0598590224981308,
+      "argmax_flips": 0,
+      "questions": 5
+    },
+    {
+      "fixture": "choice-1",
+      "reference": "mlx",
+      "max_abs_dp": 0.0,
+      "max_abs_dlogit_raw": 0.03721809387207031,
+      "argmax_flips": 0,
+      "questions": 1
+    },
+    {
+      "fixture": "choice-26",
+      "reference": "mlx",
+      "max_abs_dp": 0.0008046999573707581,
+      "max_abs_dlogit_raw": 0.05205690860748291,
+      "argmax_flips": 0,
+      "questions": 1
+    },
+    {
+      "fixture": "choice-3",
+      "reference": "mlx",
+      "max_abs_dp": 0.0035594552755355835,
+      "max_abs_dlogit_raw": 0.06256888806819916,
+      "argmax_flips": 0,
+      "questions": 1
+    },
+    {
+      "fixture": "empty-state",
+      "reference": "mlx",
+      "max_abs_dp": 0.003724217414855957,
+      "max_abs_dlogit_raw": 0.019347041845321655,
+      "argmax_flips": 0,
+      "questions": 1
+    },
+    {
+      "fixture": "escape-options",
+      "reference": "mlx",
+      "max_abs_dp": 0.002291858196258545,
+      "max_abs_dlogit_raw": 0.04380536079406738,
+      "argmax_flips": 0,
+      "questions": 1
+    },
+    {
+      "fixture": "escape-state",
+      "reference": "mlx",
+      "max_abs_dp": 0.005339145660400391,
+      "max_abs_dlogit_raw": 0.03831763565540314,
+      "argmax_flips": 0,
+      "questions": 1
+    },
+    {
+      "fixture": "list-state",
+      "reference": "mlx",
+      "max_abs_dp": 0.004659086465835571,
+      "max_abs_dlogit_raw": 0.051056623458862305,
+      "argmax_flips": 0,
+      "questions": 1
+    },
+    {
+      "fixture": "long-state",
+      "reference": "mlx",
+      "max_abs_dp": 0.013960063457489014,
+      "max_abs_dlogit_raw": 0.09478759765625,
+      "argmax_flips": 0,
+      "questions": 1
+    },
+    {
+      "fixture": "mixed-packed-3",
+      "reference": "mlx",
+      "max_abs_dp": 0.003321737051010132,
+      "max_abs_dlogit_raw": 0.051995277404785156,
+      "argmax_flips": 0,
+      "questions": 3
+    },
+    {
+      "fixture": "noul-basic",
+      "reference": "mlx",
+      "max_abs_dp": 0.00029927492141723633,
+      "max_abs_dlogit_raw": 0.009953737258911133,
+      "argmax_flips": 0,
+      "questions": 1
+    },
+    {
+      "fixture": "noul-criteria",
+      "reference": "mlx",
+      "max_abs_dp": 0.0005193352699279785,
+      "max_abs_dlogit_raw": 0.004731893539428711,
+      "argmax_flips": 0,
+      "questions": 1
+    },
+    {
+      "fixture": "null-state",
+      "reference": "mlx",
+      "max_abs_dp": 0.003724217414855957,
+      "max_abs_dlogit_raw": 0.019347041845321655,
+      "argmax_flips": 0,
+      "questions": 1
+    },
+    {
+      "fixture": "object-state",
+      "reference": "mlx",
+      "max_abs_dp": 0.002460956573486328,
+      "max_abs_dlogit_raw": 0.026863813400268555,
+      "argmax_flips": 0,
+      "questions": 1
+    },
+    {
+      "fixture": "repeat-mixed",
+      "reference": "mlx",
+      "max_abs_dp": 0.003321737051010132,
+      "max_abs_dlogit_raw": 0.051995277404785156,
+      "argmax_flips": 0,
+      "questions": 3
+    },
+    {
+      "fixture": "scalar-state",
+      "reference": "mlx",
+      "max_abs_dp": 0.003662705421447754,
+      "max_abs_dlogit_raw": 0.03398489952087402,
+      "argmax_flips": 0,
+      "questions": 1
+    },
+    {
+      "fixture": "score-3",
+      "reference": "mlx",
+      "max_abs_dp": 0.0015399456024169922,
+      "max_abs_dlogit_raw": 0.03329145908355713,
+      "argmax_flips": 0,
+      "questions": 1
+    },
+    {
+      "fixture": "score-5",
+      "reference": "mlx",
+      "max_abs_dp": 0.0038522928953170776,
+      "max_abs_dlogit_raw": 0.07911896705627441,
+      "argmax_flips": 0,
+      "questions": 1
+    },
+    {
+      "fixture": "separate-review",
+      "reference": "mlx",
+      "max_abs_dp": 0.00029927492141723633,
+      "max_abs_dlogit_raw": 0.009953737258911133,
+      "argmax_flips": 0,
+      "questions": 1
+    },
+    {
+      "fixture": "separate-route",
+      "reference": "mlx",
+      "max_abs_dp": 0.0035594552755355835,
+      "max_abs_dlogit_raw": 0.06256888806819916,
+      "argmax_flips": 0,
+      "questions": 1
+    },
+    {
+      "fixture": "separate-urgency",
+      "reference": "mlx",
+      "max_abs_dp": 0.0015399456024169922,
+      "max_abs_dlogit_raw": 0.03329145908355713,
+      "argmax_flips": 0,
+      "questions": 1
+    },
+    {
+      "fixture": "unicode-state",
+      "reference": "mlx",
+      "max_abs_dp": 0.0007276535034179688,
+      "max_abs_dlogit_raw": 0.015111744403839111,
+      "argmax_flips": 0,
+      "questions": 1
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+[workspace]
+
+[package]
+name = "link-all"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+anyhow = "1"
+# laya's Metal runtime at the revision systemone pins.
+laya-core = { git = "https://github.com/codesoda/laya-rs.git", rev = "23fff422666fd5039998fd8a55ca57f7e40d224b", default-features = false, features = ["mlx"] }
+# kev's Metal path.
+mlx-rs = { version = "=0.32.0", features = ["safetensors"] }
+# kev's planned CPU path: the exact llama.cpp binding version systemone
+# already links through openjev-llama.
+llama-cpp-2 = { version = "=0.1.156", default-features = false }
+
+[patch.crates-io]
+mlx-sys = { git = "https://github.com/codesoda/laya-rs.git", rev = "23fff422666fd5039998fd8a55ca57f7e40d224b" }

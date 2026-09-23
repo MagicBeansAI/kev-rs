@@ -1,0 +1,16 @@
+[workspace]
+
+[package]
+name = "mlx-link"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+anyhow = "1"
+half = "2"
+mlx-rs = { version = "=0.32.0", features = ["safetensors"] }
+
+# The same pin as the kev-rs root and systemone: laya-rs's patched mlx-sys.
+[patch.crates-io]
+mlx-sys = { git = "https://github.com/codesoda/laya-rs.git", rev = "23fff422666fd5039998fd8a55ca57f7e40d224b" }
