@@ -60,11 +60,7 @@ pub(crate) enum Backbone {
 impl Backbone {
     /// fp32 hidden states at each row's requested indices, for causal rows
     /// `state_ids ++ row.ids`, reusing a cached state prefix.
-    fn hidden_rows(
-        &mut self,
-        state_ids: &[u32],
-        rows: &[RowQuery],
-    ) -> Result<Vec<Vec<Vec<f32>>>> {
+    fn hidden_rows(&mut self, state_ids: &[u32], rows: &[RowQuery]) -> Result<Vec<Vec<Vec<f32>>>> {
         // Consumed only when a backend feature is compiled in.
         let _ = (state_ids, rows);
         match self {
@@ -140,7 +136,10 @@ impl Runtime {
         let head_meta = options.model_dir.join("head.meta.json");
         for path in [&base_dir, &adapter_dir] {
             if !path.is_dir() {
-                return Err(KevError::Load(format!("missing directory {}", path.display())));
+                return Err(KevError::Load(format!(
+                    "missing directory {}",
+                    path.display()
+                )));
             }
         }
         let hybrid = is_hybrid(&base_dir)?;
@@ -207,7 +206,13 @@ impl Runtime {
             }
         };
 
-        Ok(Self { tokenizer, head, backbone, hybrid, backend_name })
+        Ok(Self {
+            tokenizer,
+            head,
+            backbone,
+            hybrid,
+            backend_name,
+        })
     }
 
     /// Drop the cached state prefix (bench/testing control).
@@ -247,7 +252,10 @@ impl Runtime {
             .map(|row| {
                 let mut indices = vec![row.decide];
                 indices.extend(&row.opts);
-                RowQuery { ids: row.ids.clone(), indices }
+                RowQuery {
+                    ids: row.ids.clone(),
+                    indices,
+                }
             })
             .collect();
         let picked_rows = self.backbone.hidden_rows(&state_ids, &queries)?;

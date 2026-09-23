@@ -15,7 +15,11 @@ use serde_json::Value;
 use std::path::{Path, PathBuf};
 
 fn repo_root() -> PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR")).ancestors().nth(2).unwrap().to_path_buf()
+    Path::new(env!("CARGO_MANIFEST_DIR"))
+        .ancestors()
+        .nth(2)
+        .unwrap()
+        .to_path_buf()
 }
 
 fn manifest() -> Value {
@@ -43,11 +47,17 @@ fn checkpoint_dirs(manifest: &Value, name: &str) -> (PathBuf, PathBuf) {
         .strip_prefix("https://huggingface.co/")
         .unwrap()
         .to_string();
-    (snapshot_dir(base, base_rev), snapshot_dir(&adapter_repo, adapter_rev))
+    (
+        snapshot_dir(base, base_rev),
+        snapshot_dir(&adapter_repo, adapter_rev),
+    )
 }
 
 fn golden_files(checkpoint: &str, path: &str) -> Vec<PathBuf> {
-    let dir = repo_root().join("benchmarks/goldens").join(checkpoint).join(path);
+    let dir = repo_root()
+        .join("benchmarks/goldens")
+        .join(checkpoint)
+        .join(path);
     let mut files: Vec<_> = std::fs::read_dir(&dir)
         .unwrap_or_else(|_| panic!("missing goldens {}", dir.display()))
         .filter_map(|e| e.ok())
@@ -66,7 +76,9 @@ fn golden_files(checkpoint: &str, path: &str) -> Vec<PathBuf> {
 
 fn fixture_request(id: &str) -> SystemOneRequest {
     let raw = std::fs::read_to_string(
-        repo_root().join("benchmarks/fixtures/requests").join(format!("{id}.json")),
+        repo_root()
+            .join("benchmarks/fixtures/requests")
+            .join(format!("{id}.json")),
     )
     .unwrap();
     let doc: Value = serde_json::from_str(&raw).unwrap();
@@ -79,7 +91,10 @@ fn check_encoding(checkpoint: &str, min_goldens: usize) {
     let manifest = manifest();
     let (base_dir, _) = checkpoint_dirs(&manifest, checkpoint);
     if !base_dir.is_dir() {
-        eprintln!("skipping {checkpoint}: pinned cache missing at {}", base_dir.display());
+        eprintln!(
+            "skipping {checkpoint}: pinned cache missing at {}",
+            base_dir.display()
+        );
         return;
     }
     let tok = KevTokenizer::load(&base_dir).unwrap();
@@ -91,12 +106,27 @@ fn check_encoding(checkpoint: &str, min_goldens: usize) {
         let request = fixture_request(fixture);
         let (record, metas) = api::to_record(&request).unwrap();
 
-        assert_eq!(record.state, golden["state_text"].as_str().unwrap(), "{fixture}: state text");
-        for (question, gq) in record.questions.iter().zip(golden["questions"].as_array().unwrap())
+        assert_eq!(
+            record.state,
+            golden["state_text"].as_str().unwrap(),
+            "{fixture}: state text"
+        );
+        for (question, gq) in record
+            .questions
+            .iter()
+            .zip(golden["questions"].as_array().unwrap())
         {
-            assert_eq!(question.instr, gq["instr"].as_str().unwrap(), "{fixture}: instr");
-            let opts: Vec<&str> =
-                gq["options"].as_array().unwrap().iter().map(|o| o.as_str().unwrap()).collect();
+            assert_eq!(
+                question.instr,
+                gq["instr"].as_str().unwrap(),
+                "{fixture}: instr"
+            );
+            let opts: Vec<&str> = gq["options"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|o| o.as_str().unwrap())
+                .collect();
             assert_eq!(question.options, opts, "{fixture}: options");
         }
 
@@ -119,7 +149,13 @@ fn check_encoding(checkpoint: &str, min_goldens: usize) {
             .as_array()
             .unwrap()
             .iter()
-            .map(|q| q.as_array().unwrap().iter().map(|v| v.as_u64().unwrap() as usize).collect())
+            .map(|q| {
+                q.as_array()
+                    .unwrap()
+                    .iter()
+                    .map(|v| v.as_u64().unwrap() as usize)
+                    .collect()
+            })
             .collect();
         assert_eq!(enc.opt_idx, golden_opts, "{fixture}: opt_idx");
         assert_eq!(
@@ -134,12 +170,20 @@ fn check_encoding(checkpoint: &str, min_goldens: usize) {
         assert_eq!(rows.len(), golden_rows.len());
         assert_eq!(state_ids.len(), enc.state_tokens());
         for (row, grow) in rows.iter().zip(golden_rows) {
-            let gids: Vec<u32> =
-                grow["ids"].as_array().unwrap().iter().map(|v| v.as_u64().unwrap() as u32).collect();
+            let gids: Vec<u32> = grow["ids"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|v| v.as_u64().unwrap() as u32)
+                .collect();
             assert_eq!(row.ids, gids, "{fixture}: row ids");
             assert_eq!(row.decide, grow["decide"].as_u64().unwrap() as usize);
-            let gopts: Vec<usize> =
-                grow["opts"].as_array().unwrap().iter().map(|v| v.as_u64().unwrap() as usize).collect();
+            let gopts: Vec<usize> = grow["opts"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|v| v.as_u64().unwrap() as usize)
+                .collect();
             assert_eq!(row.opts, gopts, "{fixture}: row opts");
         }
 
@@ -150,10 +194,19 @@ fn check_encoding(checkpoint: &str, min_goldens: usize) {
             .as_array()
             .unwrap()
             .iter()
-            .map(|q| q.as_array().unwrap().iter().map(|v| v.as_f64().unwrap()).collect())
+            .map(|q| {
+                q.as_array()
+                    .unwrap()
+                    .iter()
+                    .map(|v| v.as_f64().unwrap())
+                    .collect()
+            })
             .collect();
         let answers = api::to_answers(&probs, &metas);
-        assert_eq!(&answers, &golden["wire"]["answers"], "{fixture}: wire answers");
+        assert_eq!(
+            &answers, &golden["wire"]["answers"],
+            "{fixture}: wire answers"
+        );
         let serialized = api::python_dumps(&answers);
         let output_tokens = tok.raw_tokens(&serialized).unwrap().len();
         assert_eq!(
@@ -199,8 +252,11 @@ fn assemble_model_dir(checkpoint: &str) -> PathBuf {
     std::fs::create_dir_all(&out).unwrap();
     std::os::unix::fs::symlink(&base_dir, out.join("base")).unwrap();
     std::os::unix::fs::symlink(&adapter_dir, out.join("adapter")).unwrap();
-    std::os::unix::fs::symlink(converted.join("head.safetensors"), out.join("head.safetensors"))
-        .unwrap();
+    std::os::unix::fs::symlink(
+        converted.join("head.safetensors"),
+        out.join("head.safetensors"),
+    )
+    .unwrap();
     std::os::unix::fs::symlink(converted.join("head.meta.json"), out.join("head.meta.json"))
         .unwrap();
     out
@@ -237,7 +293,13 @@ fn check_backend(
             .as_array()
             .unwrap()
             .iter()
-            .map(|q| q.as_array().unwrap().iter().map(|v| v.as_f64().unwrap()).collect())
+            .map(|q| {
+                q.as_array()
+                    .unwrap()
+                    .iter()
+                    .map(|v| v.as_f64().unwrap())
+                    .collect()
+            })
             .collect();
         for (ours, gold) in evaluation.probs.iter().zip(&golden_probs) {
             questions += 1;
@@ -267,7 +329,11 @@ fn check_backend(
                 // A flip is tolerable only on an fp32 near-tie (upstream rule).
                 let mut sorted = gold.clone();
                 sorted.sort_by(|a, b| b.partial_cmp(a).unwrap());
-                let gap = if sorted.len() > 1 { sorted[0] - sorted[1] } else { 1.0 };
+                let gap = if sorted.len() > 1 {
+                    sorted[0] - sorted[1]
+                } else {
+                    1.0
+                };
                 assert!(gap < 0.02, "{fixture}: argmax flip on gap {gap}");
                 flips.push(fixture.clone());
             }
@@ -282,18 +348,21 @@ fn check_backend(
         "{checkpoint} [{}]: {questions} questions, max|dp| {:.6} ({}), mean|dp| {:.6}, near-tie flips: {:?}",
         runtime.backend_name, worst.0, worst.1, mean_dp, flips
     );
-    assert!(worst.0 <= gate_max_dp, "max|dp| {} over gate {gate_max_dp}", worst.0);
-    assert!(mean_dp <= gate_mean_dp, "mean|dp| {mean_dp} over gate {gate_mean_dp}");
+    assert!(
+        worst.0 <= gate_max_dp,
+        "max|dp| {} over gate {gate_max_dp}",
+        worst.0
+    );
+    assert!(
+        mean_dp <= gate_mean_dp,
+        "mean|dp| {mean_dp} over gate {gate_mean_dp}"
+    );
 }
 
 /// The frozen packed-vs-separate gate (tolerances.json): a packed request
 /// and the same questions asked separately must match \u2014 row isolation.
 #[cfg(any(feature = "mlx", feature = "candle"))]
-fn check_packed_vs_separate(
-    checkpoint: &str,
-    device: kev_core::runtime::Device,
-    gate: f64,
-) {
+fn check_packed_vs_separate(checkpoint: &str, device: kev_core::runtime::Device, gate: f64) {
     use kev_core::runtime::{LoadOptions, Runtime};
 
     let mut runtime = Runtime::load(&LoadOptions {
@@ -303,13 +372,17 @@ fn check_packed_vs_separate(
     })
     .unwrap();
 
-    let packed = runtime.evaluate(&fixture_request("mixed-packed-3")).unwrap();
+    let packed = runtime
+        .evaluate(&fixture_request("mixed-packed-3"))
+        .unwrap();
     let mut max_dp = 0f64;
     for (index, separate_fixture) in ["separate-route", "separate-review", "separate-urgency"]
         .iter()
         .enumerate()
     {
-        let separate = runtime.evaluate(&fixture_request(separate_fixture)).unwrap();
+        let separate = runtime
+            .evaluate(&fixture_request(separate_fixture))
+            .unwrap();
         assert_eq!(separate.probs.len(), 1);
         for (a, b) in packed.probs[index].iter().zip(&separate.probs[0]) {
             max_dp = max_dp.max((a - b).abs());

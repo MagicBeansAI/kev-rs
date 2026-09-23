@@ -102,7 +102,9 @@ fn ffi(status: std::os::raw::c_int, what: &str) -> Result<()> {
     if status == 0 {
         Ok(())
     } else {
-        Err(KevError::Inference(format!("gdn kernel: {what} failed ({status})")))
+        Err(KevError::Inference(format!(
+            "gdn kernel: {what} failed ({status})"
+        )))
     }
 }
 
@@ -140,7 +142,9 @@ impl GdnKernel {
             mlx_sys::mlx_vector_string_free(input_names);
             mlx_sys::mlx_vector_string_free(output_names);
             if kernel.ctx.is_null() {
-                return Err(KevError::Load("gated delta metal kernel creation failed".into()));
+                return Err(KevError::Load(
+                    "gated delta metal kernel creation failed".into(),
+                ));
             }
             Ok(Self { kernel })
         }
@@ -229,9 +233,15 @@ impl GdnKernel {
             let t_scalar = mlx_sys::mlx_array_new_int(t);
             let inputs = mlx_sys::mlx_vector_array_new();
             for array in [q, k, v, g, beta, state] {
-                ffi(mlx_sys::mlx_vector_array_append_value(inputs, array.as_ptr()), "input")?;
+                ffi(
+                    mlx_sys::mlx_vector_array_append_value(inputs, array.as_ptr()),
+                    "input",
+                )?;
             }
-            ffi(mlx_sys::mlx_vector_array_append_value(inputs, t_scalar), "input T")?;
+            ffi(
+                mlx_sys::mlx_vector_array_append_value(inputs, t_scalar),
+                "input T",
+            )?;
 
             let mut outputs = mlx_sys::mlx_vector_array_new();
             let stream = mlx_sys::mlx_default_gpu_stream_new();
@@ -248,13 +258,21 @@ impl GdnKernel {
             mlx_sys::mlx_fast_metal_kernel_config_free(config);
             if status != 0 {
                 mlx_sys::mlx_vector_array_free(outputs);
-                return Err(KevError::Inference("gated delta kernel apply failed".into()));
+                return Err(KevError::Inference(
+                    "gated delta kernel apply failed".into(),
+                ));
             }
 
             let mut y_raw = mlx_sys::mlx_array_new();
-            ffi(mlx_sys::mlx_vector_array_get(&mut y_raw, outputs, 0), "get y")?;
+            ffi(
+                mlx_sys::mlx_vector_array_get(&mut y_raw, outputs, 0),
+                "get y",
+            )?;
             let mut state_raw = mlx_sys::mlx_array_new();
-            ffi(mlx_sys::mlx_vector_array_get(&mut state_raw, outputs, 1), "get state")?;
+            ffi(
+                mlx_sys::mlx_vector_array_get(&mut state_raw, outputs, 1),
+                "get state",
+            )?;
             mlx_sys::mlx_vector_array_free(outputs);
             Ok((Array::from_ptr(y_raw), Array::from_ptr(state_raw)))
         }

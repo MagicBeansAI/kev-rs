@@ -13,12 +13,12 @@ pub mod error;
 pub mod head;
 pub mod tokenizer;
 
+#[cfg(feature = "candle")]
+pub mod backend_candle;
 #[cfg(feature = "mlx")]
 pub mod backend_mlx;
 #[cfg(feature = "mlx")]
 pub(crate) mod gdn_kernel;
-#[cfg(feature = "candle")]
-pub mod backend_candle;
 pub mod runtime;
 
 pub use api::{Record, SystemOneRequest};

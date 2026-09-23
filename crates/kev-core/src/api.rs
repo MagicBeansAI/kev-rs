@@ -129,7 +129,9 @@ pub struct QuestionMeta {
 /// `api.to_record`: request -> internal record + per-question metadata.
 pub fn to_record(request: &SystemOneRequest) -> Result<(Record, Vec<QuestionMeta>)> {
     if request.questions.is_empty() {
-        return Err(KevError::InvalidRequest("questions must not be empty".into()));
+        return Err(KevError::InvalidRequest(
+            "questions must not be empty".into(),
+        ));
     }
     let mut questions = Vec::new();
     let mut metas = Vec::new();
@@ -137,7 +139,10 @@ pub fn to_record(request: &SystemOneRequest) -> Result<(Record, Vec<QuestionMeta
         let question: Question = serde_json::from_value(raw.clone())
             .map_err(|error| KevError::InvalidRequest(format!("question {id:?}: {error}")))?;
         let (instr, options, kind, keys, legend) = match &question {
-            Question::Noul { instructions, criteria } => {
+            Question::Noul {
+                instructions,
+                criteria,
+            } => {
                 let empty = Map::new();
                 let c = criteria.as_ref().unwrap_or(&empty);
                 let options = vec![
@@ -152,7 +157,10 @@ pub fn to_record(request: &SystemOneRequest) -> Result<(Record, Vec<QuestionMeta
                     None,
                 )
             }
-            Question::Choice { instructions, criteria } => {
+            Question::Choice {
+                instructions,
+                criteria,
+            } => {
                 if criteria.is_empty() || criteria.len() > MAX_OPTIONS {
                     return Err(KevError::InvalidRequest(format!(
                         "question {id:?}: criteria must have 1..{MAX_OPTIONS} options"
@@ -163,9 +171,18 @@ pub fn to_record(request: &SystemOneRequest) -> Result<(Record, Vec<QuestionMeta
                     .map(|(name, desc)| option_text(name, Some(desc)))
                     .collect();
                 let keys = criteria.keys().cloned().collect();
-                (render(instructions, 0), options, QuestionKind::Choice, keys, None)
+                (
+                    render(instructions, 0),
+                    options,
+                    QuestionKind::Choice,
+                    keys,
+                    None,
+                )
             }
-            Question::Score { instructions, criteria } => {
+            Question::Score {
+                instructions,
+                criteria,
+            } => {
                 if criteria.is_empty() || criteria.len() > MAX_OPTIONS {
                     return Err(KevError::InvalidRequest(format!(
                         "question {id:?}: criteria must have 1..{MAX_OPTIONS} levels"
@@ -174,14 +191,28 @@ pub fn to_record(request: &SystemOneRequest) -> Result<(Record, Vec<QuestionMeta
                 let options: Vec<String> = criteria.iter().map(|c| render(c, 0)).collect();
                 let keys: Vec<String> = (0..criteria.len()).map(|i| i.to_string()).collect();
                 let legend = keys.iter().cloned().zip(options.iter().cloned()).collect();
-                (render(instructions, 0), options, QuestionKind::Score, keys, Some(legend))
+                (
+                    render(instructions, 0),
+                    options,
+                    QuestionKind::Score,
+                    keys,
+                    Some(legend),
+                )
             }
         };
         questions.push(RecordQuestion { instr, options });
-        metas.push(QuestionMeta { id: id.clone(), kind, keys, legend });
+        metas.push(QuestionMeta {
+            id: id.clone(),
+            kind,
+            keys,
+            legend,
+        });
     }
     Ok((
-        Record { state: render(&request.state, 0), questions },
+        Record {
+            state: render(&request.state, 0),
+            questions,
+        },
         metas,
     ))
 }
@@ -246,7 +277,10 @@ pub fn to_answers(probs: &[Vec<f64>], metas: &[QuestionMeta]) -> Value {
                 let mut m = Map::new();
                 m.insert("type".into(), "choice".into());
                 m.insert("choice".into(), meta.keys[top].clone().into());
-                m.insert("confidence".into(), json_num(round_prob(choice_confidence(p))));
+                m.insert(
+                    "confidence".into(),
+                    json_num(round_prob(choice_confidence(p))),
+                );
                 m.insert("probabilities".into(), Value::Object(dist));
                 m
             }
@@ -265,7 +299,10 @@ pub fn to_answers(probs: &[Vec<f64>], metas: &[QuestionMeta]) -> Value {
                 m.insert("score".into(), json_num(round_prob(score)));
                 m.insert("legend".into(), Value::Object(legend));
                 m.insert("probabilities".into(), Value::Object(dist));
-                m.insert("confidence".into(), json_num(round_prob(score_confidence(p))));
+                m.insert(
+                    "confidence".into(),
+                    json_num(round_prob(score_confidence(p))),
+                );
                 m
             }
         };
@@ -275,7 +312,9 @@ pub fn to_answers(probs: &[Vec<f64>], metas: &[QuestionMeta]) -> Value {
 }
 
 fn json_num(x: f64) -> Value {
-    serde_json::Number::from_f64(x).map(Value::Number).unwrap_or(Value::Null)
+    serde_json::Number::from_f64(x)
+        .map(Value::Number)
+        .unwrap_or(Value::Null)
 }
 
 /// Python `json.dumps(answers)` with the default separators, for the

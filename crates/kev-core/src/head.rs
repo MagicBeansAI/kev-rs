@@ -26,7 +26,9 @@ impl PointerHead {
         let (k_weight, k_shape) = file.tensor_f32("k.weight")?;
         let (k_bias, _) = file.tensor_f32("k.bias")?;
         if q_shape.len() != 2 || q_shape != k_shape {
-            return Err(KevError::Load(format!("unexpected head shapes {q_shape:?} {k_shape:?}")));
+            return Err(KevError::Load(format!(
+                "unexpected head shapes {q_shape:?} {k_shape:?}"
+            )));
         }
         let meta: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(head_meta)?)
             .map_err(|error| KevError::Load(format!("head.meta.json: {error}")))?;
@@ -102,7 +104,10 @@ impl SafeTensors {
         let header_len = u64::from_le_bytes(bytes[..8].try_into().unwrap()) as usize;
         let header: serde_json::Value = serde_json::from_slice(&bytes[8..8 + header_len])
             .map_err(|error| KevError::Load(format!("safetensors header: {error}")))?;
-        Ok(Self { header, data: bytes[8 + header_len..].to_vec() })
+        Ok(Self {
+            header,
+            data: bytes[8 + header_len..].to_vec(),
+        })
     }
 
     fn tensor_f32(&self, name: &str) -> Result<(Vec<f32>, Vec<usize>)> {
@@ -111,15 +116,23 @@ impl SafeTensors {
             return Err(KevError::Load(format!("safetensors lacks {name}")));
         }
         if entry["dtype"] != "F32" {
-            return Err(KevError::Load(format!("{name} is {}, expected F32", entry["dtype"])));
+            return Err(KevError::Load(format!(
+                "{name} is {}, expected F32",
+                entry["dtype"]
+            )));
         }
         let shape: Vec<usize> = entry["shape"]
             .as_array()
-            .map(|a| a.iter().filter_map(|v| v.as_u64()).map(|v| v as usize).collect())
+            .map(|a| {
+                a.iter()
+                    .filter_map(|v| v.as_u64())
+                    .map(|v| v as usize)
+                    .collect()
+            })
             .unwrap_or_default();
-        let offsets = entry["data_offsets"].as_array().ok_or_else(|| {
-            KevError::Load(format!("{name}: missing data_offsets"))
-        })?;
+        let offsets = entry["data_offsets"]
+            .as_array()
+            .ok_or_else(|| KevError::Load(format!("{name}: missing data_offsets")))?;
         let (start, end) = (
             offsets[0].as_u64().unwrap_or(0) as usize,
             offsets[1].as_u64().unwrap_or(0) as usize,

@@ -42,16 +42,20 @@ impl KevTokenizer {
                 .token_to_id(token)
                 .ok_or_else(|| KevError::Load(format!("tokenizer lacks {token}")))?;
         }
-        let config: serde_json::Value = serde_json::from_str(
-            &std::fs::read_to_string(base_dir.join("tokenizer_config.json"))?,
-        )
+        let config: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(
+            base_dir.join("tokenizer_config.json"),
+        )?)
         .map_err(|error| KevError::Load(format!("tokenizer_config.json: {error}")))?;
         // Upstream pad_id(): the tokenizer's pad token, falling back to 0.
         let pad_id = config["pad_token"]
             .as_str()
             .and_then(|token| inner.token_to_id(token))
             .unwrap_or(0);
-        Ok(Self { inner, special_ids, pad_id })
+        Ok(Self {
+            inner,
+            special_ids,
+            pad_id,
+        })
     }
 
     /// Plain tokenization without escaping (upstream uses this for the

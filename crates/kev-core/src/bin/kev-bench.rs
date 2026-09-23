@@ -17,8 +17,12 @@ fn main() -> anyhow::Result<()> {
     use std::time::Instant;
 
     let mut args = std::env::args().skip(1);
-    let checkpoint = args.next().expect("usage: kev-bench <checkpoint> <cpu|metal> [out.json]");
-    let device_name = args.next().expect("usage: kev-bench <checkpoint> <cpu|metal> [out.json]");
+    let checkpoint = args
+        .next()
+        .expect("usage: kev-bench <checkpoint> <cpu|metal> [out.json]");
+    let device_name = args
+        .next()
+        .expect("usage: kev-bench <checkpoint> <cpu|metal> [out.json]");
     let out_path = args.next();
     let device = match device_name.as_str() {
         "cpu" => Device::Cpu,
@@ -26,9 +30,14 @@ fn main() -> anyhow::Result<()> {
         other => anyhow::bail!("unknown device {other}"),
     };
 
-    let root = Path::new(env!("CARGO_MANIFEST_DIR")).ancestors().nth(2).unwrap().to_path_buf();
-    let manifest: serde_json::Value =
-        serde_json::from_str(&std::fs::read_to_string(root.join("manifests/sources.json"))?)?;
+    let root = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .ancestors()
+        .nth(2)
+        .unwrap()
+        .to_path_buf();
+    let manifest: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(
+        root.join("manifests/sources.json"),
+    )?)?;
     let facts = &manifest["checkpoints"][&checkpoint];
     let snapshot = |repo: &str, rev: &str| -> PathBuf {
         root.join(".cache/kev/hf")
@@ -47,7 +56,9 @@ fn main() -> anyhow::Result<()> {
         .unwrap();
     let adapter_dir = snapshot(
         adapter_repo,
-        manifest["sources"][&checkpoint]["revision"].as_str().unwrap(),
+        manifest["sources"][&checkpoint]["revision"]
+            .as_str()
+            .unwrap(),
     );
     let converted = root.join(".cache/kev/converted").join(&checkpoint);
     let model_dir = std::env::temp_dir().join(format!("kev-bench-{checkpoint}"));
@@ -55,15 +66,25 @@ fn main() -> anyhow::Result<()> {
     std::fs::create_dir_all(&model_dir)?;
     std::os::unix::fs::symlink(&base_dir, model_dir.join("base"))?;
     std::os::unix::fs::symlink(&adapter_dir, model_dir.join("adapter"))?;
-    std::os::unix::fs::symlink(converted.join("head.safetensors"), model_dir.join("head.safetensors"))?;
-    std::os::unix::fs::symlink(converted.join("head.meta.json"), model_dir.join("head.meta.json"))?;
+    std::os::unix::fs::symlink(
+        converted.join("head.safetensors"),
+        model_dir.join("head.safetensors"),
+    )?;
+    std::os::unix::fs::symlink(
+        converted.join("head.meta.json"),
+        model_dir.join("head.meta.json"),
+    )?;
 
     let fixture: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(
         root.join("benchmarks/fixtures/requests/bench-m5.json"),
     )?)?;
     let request: kev_core::SystemOneRequest = serde_json::from_value(fixture["request"].clone())?;
 
-    let mut runtime = Runtime::load(&LoadOptions { model_dir, device, temperature: None })?;
+    let mut runtime = Runtime::load(&LoadOptions {
+        model_dir,
+        device,
+        temperature: None,
+    })?;
     let (enc, _metas) = runtime.encode_request(&request)?;
 
     let warmup = 3usize;

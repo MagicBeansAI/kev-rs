@@ -105,9 +105,7 @@ enum Mixer {
 
 type Fn2 = Box<dyn for<'a> FnMut((&'a Array, &'a Array)) -> std::result::Result<Array, Exception>>;
 type Fn3 = Box<
-    dyn for<'a> FnMut(
-        (&'a Array, &'a Array, &'a Array),
-    ) -> std::result::Result<Array, Exception>,
+    dyn for<'a> FnMut((&'a Array, &'a Array, &'a Array)) -> std::result::Result<Array, Exception>,
 >;
 
 /// Compiled elementwise glue, mirroring the `mx.compile`d helpers the
@@ -200,7 +198,11 @@ fn load_base(base_dir: &Path) -> AnyResult<HashMap<String, Array>> {
         .filter(|p| p.extension().is_some_and(|x| x == "safetensors"))
         .collect();
     files.sort();
-    anyhow::ensure!(!files.is_empty(), "no safetensors in {}", base_dir.display());
+    anyhow::ensure!(
+        !files.is_empty(),
+        "no safetensors in {}",
+        base_dir.display()
+    );
 
     let mut raw = HashMap::new();
     for file in &files {
@@ -244,14 +246,19 @@ struct AdapterConfig {
 }
 
 fn merge_lora(weights: &mut HashMap<String, Array>, adapter_dir: &Path) -> AnyResult<usize> {
-    let config: AdapterConfig =
-        serde_json::from_str(&std::fs::read_to_string(adapter_dir.join("adapter_config.json"))?)?;
+    let config: AdapterConfig = serde_json::from_str(&std::fs::read_to_string(
+        adapter_dir.join("adapter_config.json"),
+    )?)?;
     anyhow::ensure!(
         config.trainable_token_indices.is_none(),
         "adapters with trainable_token_indices are not supported on the MLX path"
     );
     let alpha = config.lora_alpha
-        / if config.use_rslora { config.r.sqrt() } else { config.r };
+        / if config.use_rslora {
+            config.r.sqrt()
+        } else {
+            config.r
+        };
     let adapter = Array::load_safetensors(adapter_dir.join("adapter_model.safetensors"))?;
 
     let cpu = Stream::new_with_device(&Device::cpu());
@@ -276,7 +283,10 @@ fn merge_lora(weights: &mut HashMap<String, Array>, adapter_dir: &Path) -> AnyRe
                 &lora_a.as_dtype(Dtype::Float32)?,
             )?
             .multiply(&Array::from_f32(alpha))?;
-            let out = base.as_dtype(Dtype::Float32)?.add(&delta)?.as_dtype(base.dtype())?;
+            let out = base
+                .as_dtype(Dtype::Float32)?
+                .add(&delta)?
+                .as_dtype(base.dtype())?;
             eval([&out])?;
             weights.insert(target, out);
             merged += 1;
@@ -323,8 +333,7 @@ impl MlxBackbone {
             let mixer = if cfg.is_linear(layer) {
                 let a_log = take(format!("{p}.linear_attn.A_log"))?;
                 let neg_exp_a_log = (|| -> AnyResult<Array> {
-                    let value =
-                        ops::negative(&ops::exp(&a_log.as_dtype(Dtype::Float32)?)?)?;
+                    let value = ops::negative(&ops::exp(&a_log.as_dtype(Dtype::Float32)?)?)?;
                     eval([&value])?;
                     Ok(value)
                 })()
@@ -468,7 +477,11 @@ impl MlxBackbone {
             let mlp = linear(&fused, &block.down_proj)?;
             h = mid.add(&mlp)?;
         }
-        Ok(fast::rms_norm(&h, Some(&self.final_norm), cfg.rms_norm_eps)?)
+        Ok(fast::rms_norm(
+            &h,
+            Some(&self.final_norm),
+            cfg.rms_norm_eps,
+        )?)
     }
 
     fn attention(
@@ -504,7 +517,11 @@ impl MlxBackbone {
         let queries = fast::rope(&queries, dims, false, base, 1.0, pos_offset, None)?;
         let keys = fast::rope(&keys, dims, false, base, 1.0, pos_offset, None)?;
 
-        let LayerState::Kv { keys: cached_k, values: cached_v } = state else {
+        let LayerState::Kv {
+            keys: cached_k,
+            values: cached_v,
+        } = state
+        else {
             anyhow::bail!("layer state mismatch: expected Kv");
         };
         let all_keys = if cached_k.shape()[2] == 0 {
@@ -527,7 +544,10 @@ impl MlxBackbone {
             fast::ScaledDotProductAttentionMask::Causal,
             None,
         )?;
-        *state = LayerState::Kv { keys: all_keys, values: all_values };
+        *state = LayerState::Kv {
+            keys: all_keys,
+            values: all_values,
+        };
 
         let out = out.transpose_axes(&[0, 2, 1, 3])?.reshape(&[b, l, -1])?;
         let gated = out.multiply(&ops::sigmoid(&gate)?)?;
@@ -582,11 +602,13 @@ impl MlxBackbone {
         let (y, new_state) = self.kernel.apply(&q, &k, &v, &g, &beta, state)?;
         let _ = hv;
 
-        *layer_state = LayerState::Gdn { conv_tail: new_tail, state: new_state };
+        *layer_state = LayerState::Gdn {
+            conv_tail: new_tail,
+            state: new_state,
+        };
 
         let normed = fast::rms_norm(&y, Some(&w.norm), cfg.rms_norm_eps)?;
-        let out = (self.compiled.borrow_mut().gated_swiglu)((&normed, &z))?
-            .reshape(&[b, s, -1])?;
+        let out = (self.compiled.borrow_mut().gated_swiglu)((&normed, &z))?.reshape(&[b, s, -1])?;
         linear(&out, &w.out_proj)
     }
 
@@ -645,7 +667,10 @@ impl MlxBackbone {
         if !hit {
             let mut states = self.fresh_states()?;
             self.forward(&[state_ids.to_vec()], &mut states, 0)?;
-            self.prefix = Some(Prefix { state_ids: state_ids.to_vec(), layers: states });
+            self.prefix = Some(Prefix {
+                state_ids: state_ids.to_vec(),
+                layers: states,
+            });
         }
         self.last_hit = hit;
 

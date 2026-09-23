@@ -71,7 +71,11 @@ impl CandleBackbone {
             .filter(|p| p.extension().is_some_and(|x| x == "safetensors"))
             .collect();
         files.sort();
-        anyhow::ensure!(!files.is_empty(), "no safetensors in {}", base_dir.display());
+        anyhow::ensure!(
+            !files.is_empty(),
+            "no safetensors in {}",
+            base_dir.display()
+        );
 
         let mut weights = HashMap::new();
         for file in &files {
@@ -128,7 +132,13 @@ impl CandleBackbone {
         }
         anyhow::ensure!(merged > 0, "no LoRA pairs merged");
 
-        Ok(Self { config, weights, device, prefix: None, last_hit: false })
+        Ok(Self {
+            config,
+            weights,
+            device,
+            prefix: None,
+            last_hit: false,
+        })
     }
 
     pub fn last_prefix_hit(&self) -> bool {
@@ -203,12 +213,7 @@ impl CandleBackbone {
         Ok(probs.matmul(values)?)
     }
 
-    fn forward(
-        &self,
-        ids: &[u32],
-        states: &mut [KvState],
-        pos_offset: usize,
-    ) -> AnyResult<Tensor> {
+    fn forward(&self, ids: &[u32], states: &mut [KvState], pos_offset: usize) -> AnyResult<Tensor> {
         let cfg = &self.config;
         let heads = cfg.num_attention_heads;
         let kv_heads = cfg.num_key_value_heads;
@@ -304,14 +309,20 @@ impl CandleBackbone {
 
     fn fresh_states(&self) -> Vec<KvState> {
         (0..self.config.num_hidden_layers)
-            .map(|_| KvState { keys: None, values: None })
+            .map(|_| KvState {
+                keys: None,
+                values: None,
+            })
             .collect()
     }
 
     fn snapshot(states: &[KvState]) -> Vec<KvState> {
         states
             .iter()
-            .map(|s| KvState { keys: s.keys.clone(), values: s.values.clone() })
+            .map(|s| KvState {
+                keys: s.keys.clone(),
+                values: s.values.clone(),
+            })
             .collect()
     }
 
@@ -339,7 +350,10 @@ impl CandleBackbone {
         if !hit {
             let mut states = self.fresh_states();
             self.forward(state_ids, &mut states, 0)?;
-            self.prefix = Some(Prefix { state_ids: state_ids.to_vec(), layers: states });
+            self.prefix = Some(Prefix {
+                state_ids: state_ids.to_vec(),
+                layers: states,
+            });
         }
         self.last_hit = hit;
 
