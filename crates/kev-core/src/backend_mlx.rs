@@ -172,11 +172,10 @@ pub struct MlxBackbone {
     embed: Array,
     blocks: Vec<Block>,
     final_norm: Array,
-    /// Scalar constants in the compute dtype: q scale (dk^-1), k scale
-    /// (dk^-0.5), and zero (softplus via logaddexp).
+    /// Scalar constants in the compute dtype: q scale (dk^-1) and k scale
+    /// (dk^-0.5).
     q_scale: Array,
     k_scale: Array,
-    zero: Array,
     kernel: crate::gdn_kernel::GdnKernel,
     compiled: RefCell<CompiledOps>,
     pad_id: u32,
@@ -257,7 +256,7 @@ fn merge_lora(weights: &mut HashMap<String, Array>, adapter_dir: &Path) -> AnyRe
 
     let cpu = Stream::new_with_device(&Device::cpu());
     let mut merged = 0usize;
-    mlx_rs::with_new_default_stream(cpu, || -> AnyResult<()> {
+    mlx_rs::with_stream(&cpu, || -> AnyResult<()> {
         for (key, lora_a) in &adapter {
             let Some(path) = key
                 .strip_prefix("base_model.model.")
@@ -375,7 +374,6 @@ impl MlxBackbone {
             final_norm,
             q_scale: make_const(inv_scale * inv_scale)?,
             k_scale: make_const(inv_scale)?,
-            zero: make_const(0.0)?,
             kernel,
             compiled: RefCell::new(CompiledOps::new()),
             pad_id,
@@ -488,7 +486,7 @@ impl MlxBackbone {
         let head_dim = cfg.head_dim;
 
         let qg = linear(x, &w.q_proj)?.reshape(&[b, l, heads, 2 * head_dim])?;
-        let parts = qg.split(2, -1)?;
+        let parts = qg.split_equal(2, -1)?;
         let (queries, gate) = (&parts[0], parts[1].reshape(&[b, l, -1])?);
 
         let keys = linear(x, &w.k_proj)?.reshape(&[b, l, kv_heads, head_dim])?;
@@ -512,12 +510,12 @@ impl MlxBackbone {
         let all_keys = if cached_k.shape()[2] == 0 {
             keys
         } else {
-            ops::concatenate_axis(&[&*cached_k, &keys], 2)?
+            ops::concatenate(&[&*cached_k, &keys], 2)?
         };
         let all_values = if cached_v.shape()[2] == 0 {
             values
         } else {
-            ops::concatenate_axis(&[&*cached_v, &values], 2)?
+            ops::concatenate(&[&*cached_v, &values], 2)?
         };
 
         let scale = (head_dim as f32).powf(-0.5);
@@ -562,13 +560,13 @@ impl MlxBackbone {
             anyhow::bail!("layer state mismatch: expected Gdn");
         };
 
-        let conv_input = ops::concatenate_axis(&[&*conv_tail, &qkv], 1)?;
+        let conv_input = ops::concatenate(&[&*conv_tail, &qkv], 1)?;
         // Keep the last K-1 inputs for the next continuation.
         let total = conv_input.shape()[1];
         let new_tail = conv_input.try_index((.., (total - (kernel - 1))..total, ..))?;
         let conv_out = silu(&ops::conv1d(&conv_input, &w.conv1d, 1, 0, 1, conv_dim)?)?;
 
-        let parts = conv_out.split_axis(&[key_dim, 2 * key_dim], -1)?;
+        let parts = conv_out.split_at_indices(&[key_dim, 2 * key_dim], -1)?;
         let q = parts[0].reshape(&[b, s, hk, dk])?;
         let k = parts[1].reshape(&[b, s, hk, dk])?;
         let v = parts[2].reshape(&[b, s, hv, dv])?;
