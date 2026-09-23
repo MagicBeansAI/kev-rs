@@ -195,6 +195,7 @@ def main() -> None:
                 "files": entries,
             }
 
+    previous = json.loads(manifest_path.read_text()) if manifest_path.exists() else {}
     manifest = {
         "schema_version": SCHEMA_VERSION,
         "generated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
@@ -207,6 +208,8 @@ def main() -> None:
         "sources": sources,
         "python_environment": python_environment(),
     }
+    if "converted" in previous:
+        manifest["converted"] = previous["converted"]
     manifest_path.parent.mkdir(parents=True, exist_ok=True)
     manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
     log(f"wrote {manifest_path}")

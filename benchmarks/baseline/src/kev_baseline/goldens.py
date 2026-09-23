@@ -236,7 +236,13 @@ def main() -> None:
     parser.add_argument("--checkpoint", choices=[*sorted(CHECKPOINTS), "all"], default="all")
     parser.add_argument("--path", choices=[*PATHS, "all"], default="all", dest="oracle_path")
     parser.add_argument("--fixture", action="append", help="restrict to these fixture ids")
+    parser.add_argument(
+        "--subset-reason",
+        help="why this run covers a fixture subset; recorded in run.json (required with --fixture)",
+    )
     args = parser.parse_args()
+    if args.fixture and not args.subset_reason:
+        raise SystemExit("--fixture needs --subset-reason so the gap is documented, not silent")
 
     present = [name for name in FORBIDDEN_ENV if os.environ.get(name)]
     if present:
@@ -288,6 +294,8 @@ def main() -> None:
                 "determinism_first_fixture": determinism,
                 "total_seconds": round(time.time() - total, 1),
             }
+            if args.subset_reason:
+                run_doc["subset_reason"] = args.subset_reason
             (out_dir / "run.json").write_text(json.dumps(run_doc, indent=2, sort_keys=True) + "\n")
             summary[f"{checkpoint}/{oracle_path}"] = f"{len(fixtures)} fixtures in {run_doc['total_seconds']}s"
             del model

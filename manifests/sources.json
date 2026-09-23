@@ -31,6 +31,50 @@
       "weights_dtype": null
     }
   },
+  "converted": {
+    "kev-0.6b": {
+      "directory": ".cache/kev/converted/kev-0.6b",
+      "files": {
+        "head.meta.json": {
+          "bytes": 1869,
+          "sha256": "a11888dda7c4e0ee15935ad7119a27d8b6382dc1cabf2be5bd5d4864611f85bc"
+        },
+        "head.safetensors": {
+          "bytes": 2099504,
+          "sha256": "006201e630a8cdef3386e803e38d6374786c557cf7b5d8637a4774b52f075202"
+        }
+      },
+      "source_head_pt_sha256": "ce6cd9ffc54db41c179b65a33d60973dc8280c29e886218eb3ec07dc28d6f28b"
+    },
+    "kev-0.8b": {
+      "directory": ".cache/kev/converted/kev-0.8b",
+      "files": {
+        "head.meta.json": {
+          "bytes": 2715,
+          "sha256": "9173fce1960cee16f73d7751aacc8b52da35352e73f7c89505ea25fe76965cb9"
+        },
+        "head.safetensors": {
+          "bytes": 2099504,
+          "sha256": "5a5649092c2c08bcb7cb3e6217f1a0d598e3dcdea68f84a2506644b555f8820b"
+        }
+      },
+      "source_head_pt_sha256": "39f4343ccccc65e583bbfff0de0e11bfedb849fcfaaf94b50ac4f2b73bc79c65"
+    },
+    "kev-4b": {
+      "directory": ".cache/kev/converted/kev-4b",
+      "files": {
+        "head.meta.json": {
+          "bytes": 2638,
+          "sha256": "b526564587af43975d75eb0875fa667cd2867f54b0e5b75618d2859dc3ef90c9"
+        },
+        "head.safetensors": {
+          "bytes": 5245232,
+          "sha256": "e51e48f126620ba27fd928b69af128a03c793e956926e44a2e71263b1618f72e"
+        }
+      },
+      "source_head_pt_sha256": "d8f796da36ff7bd7c0fb9496b452139bb7851af4fc82b07b500b682d3f721d6a"
+    }
+  },
   "generated_at": "2026-09-23T14:54:47+00:00",
   "python_environment": {
     "packages": {

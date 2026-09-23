@@ -1,0 +1,32 @@
+{
+  "status": "Frozen at K0 (2026-09-24), before any Rust runtime exists. Relaxing a tolerance after a failure is prohibited; a failing configuration gets its own quality gate and version, with a dated amendment recorded here before Rust results are inspected.",
+  "reference": "torch fp32 on CPU (upstream kev at 557598fced1dada75dfbf36ed144dce309ac6ceb); every upstream reported number uses this path.",
+  "instrumented_matches_native": 1e-09,
+  "instrumented_matches_native_evidence": "Measured 0.0 (bitwise) on every checkpoint and path: the instrumented T=1 pass re-applies upstream's own calibration ops.",
+  "prefix_vs_native": {
+    "torch-fp32": 1e-05,
+    "mlx": 1e-06
+  },
+  "prefix_vs_native_evidence": "Measured max 1.2e-6 (torch fp32; fp32 noise from the KV-cache path) and 0.0 (MLX; the state cache is replayed exactly). Upstream test_model.py bounds prefix vs full pass at 1e-4.",
+  "packed_vs_separate": {
+    "torch-fp32": 1e-05,
+    "mlx": 0.01
+  },
+  "packed_vs_separate_evidence": "Row isolation is exact by construction. Measured max 1.1e-6 on torch fp32 (upstream test_model.py bounds row vs packed at 1e-4). On MLX the packed request and the standalone request take different batch shapes through bf16 kernels; measured max 0.0047, upstream test_mlx.py bounds variant agreement at 0.01. Argmax flips: none allowed.",
+  "mlx_vs_fp32": {
+    "kev-0.8b": {
+      "max_abs_dp": 0.06,
+      "mean_abs_dp": 0.005,
+      "argmax_flips": 2,
+      "flip_top2_gap": 0.02
+    },
+    "kev-4b": {
+      "max_abs_dp": 0.03,
+      "mean_abs_dp": 0.004,
+      "argmax_flips": 1,
+      "flip_top2_gap": 0.02
+    }
+  },
+  "mlx_vs_fp32_evidence": "Gates follow upstream's own published envelope at the pinned commit, not our smaller fixture set: Kev-4B max |dp| 0.025242, mean 0.0016, 1 flip in 1264 questions (runs/r4-mlx-parity-4b/report.json; test_mlx.py asserts max < 0.03); Kev-0.8B max 0.0542, mean 0.0023, 4 flips (runs/r4-mlx-parity-0.8b). A flip is tolerable only on an fp32 near-tie (top-2 gap < 0.02), upstream's rule. Measured here (30 questions): 0.8B max 0.0141, mean 0.0026, 1 flip at gap 0.004.",
+  "note_kev-0.6b": "kev-0.6b (Qwen3, attention-only) has no MLX path (upstream refuses it) and no fitted temperature (serves at T=1.0). Its goldens are torch fp32 only."
+}
