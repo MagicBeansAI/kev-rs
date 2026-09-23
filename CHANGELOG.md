@@ -1,0 +1,49 @@
+# Changelog
+
+All notable changes to kev-rs are recorded here. The format follows
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Release notes for
+a tag `vX.Y.Z` are taken from the matching `## [X.Y.Z]` section by the
+release workflow.
+
+## [Unreleased]
+
+## [0.1.0] - 2026-09-24
+
+First tagged release: the `kev-core` library crate, an independent Rust
+runtime for [Kev](https://github.com/jaredpalmer/kev) decision models
+(upstream pinned at `557598fced1dada75dfbf36ed144dce309ac6ceb`), developed
+under the frozen K0 gates and released only after every K2/K3 gate passed
+(see `docs/`).
+
+### Added
+
+- `kev-core`: tokenizer and special-token escaping, request encoding and
+  per-question row isolation (bit-exact against the frozen upstream
+  goldens), fp32 LoRA merge, framework-free fp32 pointer head and
+  temperature calibration, and upstream-exact answer math including the
+  serialised-answer `output_tokens` count. `head.pt` is consumed only as a
+  checksummed safetensors conversion; the runtime never executes pickle.
+- MLX backend (`mlx` feature, Apple Silicon): the Qwen3.5 hybrid backbone
+  (Gated DeltaNet + gated attention) with mlx-lm's fused gated-delta Metal
+  kernel, batched branch rows on a replicated state prefix and a prefix
+  cache. Parity vs the fp32 oracle: max |dp| 0.0128 (kev-0.8b) / 0.0067
+  (kev-4b), zero argmax flips; bench-m5 at 0.99×/1.02× (0.8b) and
+  0.99×/1.01× (4b) of the Python MLX medians on the same host.
+- Candle CPU backend (`candle` feature, portable; `candle-accelerate` adds
+  Apple BLAS): the Qwen3 attention-only generation (kev-0.6b) in fp32,
+  parity max |dp| 8e-6. Qwen3.5 hybrid CPU inference is a load error, not
+  a fallback (llama.cpp remains the long-term hybrid-CPU route).
+- Baseline tooling (`benchmarks/baseline`, Python, oracle only — never
+  shipped): pinned fetch with SHA-256 verification, `head.pt` →
+  safetensors conversion, golden generation, benchmarks and gate tests.
+- Frozen gate artifacts: goldens, `tolerances.json`, `manifest.json`,
+  fixtures, and the K0–K3 gate reports under `docs/`.
+
+### Known limits
+
+- Weight-dependent parity/bench tests are `#[ignore]` and run on pinned
+  Apple Silicon hardware with the model cache present; CI runs the
+  weight-free suite (encoding tests skip gracefully without the cache).
+- Not published to crates.io; consumers pin a Git revision (mirroring
+  laya-core) and must repeat the `mlx-sys` `[patch.crates-io]` pin for
+  Metal builds.

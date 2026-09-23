@@ -1,0 +1,103 @@
+name: CI and tagged releases
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  RUSTUP_TOOLCHAIN: 1.95.0
+  CARGO_TERM_COLOR: always
+
+jobs:
+  linux:
+    name: Linux (fmt, clippy, tests, candle build)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Toolchain
+        run: |
+          rustup toolchain install "$RUSTUP_TOOLCHAIN" --profile minimal --component rustfmt,clippy
+          rustup default "$RUSTUP_TOOLCHAIN"
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: linux-cargo-${{ hashFiles('Cargo.lock') }}
+      - name: Format
+        run: cargo fmt --all --check
+      - name: Clippy (no backend)
+        run: cargo clippy -p kev-core --all-targets -- -D warnings
+      - name: Clippy (candle)
+        run: cargo clippy -p kev-core --all-targets --features candle -- -D warnings
+      - name: Tests (weight-free; encoding parity skips without the model cache)
+        run: cargo test -p kev-core
+      - name: Tests (candle feature, weight-free subset)
+        run: cargo test -p kev-core --features candle
+      - name: Build the CPU backend
+        run: cargo build -p kev-core --features candle
+
+  macos:
+    name: macOS (clippy + build, mlx)
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Toolchain
+        run: |
+          rustup toolchain install "$RUSTUP_TOOLCHAIN" --profile minimal --component rustfmt,clippy
+          rustup default "$RUSTUP_TOOLCHAIN"
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: macos-cargo-${{ hashFiles('Cargo.lock') }}
+      - name: Clippy (mlx; compiles MLX from source)
+        run: cargo clippy -p kev-core --all-targets --features mlx -- -D warnings
+      - name: Tests (weight-free subset, mlx feature)
+        run: cargo test -p kev-core --features mlx
+    # Weight-dependent parity and benchmark gates cannot run here: they need
+    # the pinned model cache and idle Apple Silicon. They gate tags locally
+    # (docs/RELEASE.md) and their numbers live in docs/K2-CORE.md.
+
+  release:
+    name: GitHub release from the changelog
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [linux, macos]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract the changelog section for this tag
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          awk -v ver="$version" '
+            $0 ~ "^## \\[" ver "\\]" { found = 1; next }
+            found && /^## \[/ { exit }
+            found { print }
+          ' CHANGELOG.md > release-notes.md
+          if ! [ -s release-notes.md ]; then
+            echo "CHANGELOG.md has no section for $version" >&2
+            exit 1
+          fi
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --title "kev-rs $GITHUB_REF_NAME" \
+            --notes-file release-notes.md \
+            --verify-tag
