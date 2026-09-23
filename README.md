@@ -12,10 +12,15 @@ calibration. It has two backends:
 - **MLX** on Apple Silicon (via `mlx-rs`): required on macOS, mirroring
   upstream's own MLX path for the Qwen3.5 hybrid backbone.
 
-Status: **K0 complete (baseline, goldens, frozen gates); K1 runtime spike
-complete** (`docs/K1-RUNTIME.md`): Metal = mlx-rs port (parity proven on
-kev-0.8b and kev-4b against the K0 goldens), CPU = llama.cpp (llama-cpp-2
-0.1.156, parity pending at K2). `kev-core` does not exist yet.
+Status: **K0–K3 complete.** K0 baseline/goldens/frozen gates
+(`docs/K0-BASELINE.md`); K1 runtime decision (`docs/K1-RUNTIME.md`);
+K2 `crates/kev-core` under the frozen parity and bench-m5 gates
+(`docs/K2-CORE.md`: MLX 0.99×/1.02× the Python medians, zero argmax
+flips; CPU = Candle with the Qwen3 generation, an amendment recorded in
+that report — llama.cpp remains the long-term hybrid-CPU route); K3 the
+`systemone-kev` adapter in the systemone repository (TypeSafe SDK smoke
+passing on cpu and metal). Pre-release: not yet published as a crate or
+pushed; systemone consumes it as a path dependency.
 
 ## Upstream pin
 
