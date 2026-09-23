@@ -48,11 +48,19 @@ frozen gates were touched.
 
 ## Known limits (disclosed, not gated away)
 
-- kev-rs has no CI yet: the repository is local-only (no push has been
-  authorized), so "CPU path tested in CI on Linux" from the issue gate is
-  pending the publication decision.
+- CI (added at publication, `.github/workflows/ci.yml`) runs the
+  weight-free suite on Linux and macOS; the weight-dependent parity and
+  bench gates run on the pinned hardware and gate tags locally
+  (`docs/RELEASE.md`, tracked in issue #1).
 - Qwen3.5 hybrid CPU inference is not implemented (K1/K2 amendment):
   `device = "cpu"` serves the Qwen3 generation (kev-0.6b); llama.cpp
-  remains the long-term hybrid-CPU route.
-- Third-party license regeneration for release packaging is deferred until
-  kev is pinned (kev is documented as excluded from binary releases).
+  remains the long-term hybrid-CPU route (issue #1).
+- Third-party license regeneration for systemone release packaging is
+  deferred until kev enters its binary release feature sets (issue #1).
+
+## Publication (post-report addendum)
+
+kev-rs was published to <https://github.com/codesoda/kev-rs> and tagged
+`v0.1.0` (commit `799d552e`); systemone's `feat/kev-backend` (PR #18)
+depends on that pinned revision instead of the earlier path dependency,
+and the cpu smoke was re-run against the pin (passed).

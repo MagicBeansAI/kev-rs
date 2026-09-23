@@ -19,8 +19,9 @@ K2 `crates/kev-core` under the frozen parity and bench-m5 gates
 flips; CPU = Candle with the Qwen3 generation, an amendment recorded in
 that report — llama.cpp remains the long-term hybrid-CPU route); K3 the
 `systemone-kev` adapter in the systemone repository (TypeSafe SDK smoke
-passing on cpu and metal). Pre-release: not yet published as a crate or
-pushed; systemone consumes it as a path dependency.
+passing on cpu and metal). Released as `v0.1.0`; systemone pins the tag
+commit as a Git dependency (`docs/RELEASE.md`). Post-release work is
+tracked in issue #1.
 
 ## Upstream pin
 
