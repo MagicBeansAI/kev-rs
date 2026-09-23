@@ -286,6 +286,67 @@ fn check_backend(
     assert!(mean_dp <= gate_mean_dp, "mean|dp| {mean_dp} over gate {gate_mean_dp}");
 }
 
+/// The frozen packed-vs-separate gate (tolerances.json): a packed request
+/// and the same questions asked separately must match \u2014 row isolation.
+#[cfg(any(feature = "mlx", feature = "candle"))]
+fn check_packed_vs_separate(
+    checkpoint: &str,
+    device: kev_core::runtime::Device,
+    gate: f64,
+) {
+    use kev_core::runtime::{LoadOptions, Runtime};
+
+    let mut runtime = Runtime::load(&LoadOptions {
+        model_dir: assemble_model_dir(checkpoint),
+        device,
+        temperature: None,
+    })
+    .unwrap();
+
+    let packed = runtime.evaluate(&fixture_request("mixed-packed-3")).unwrap();
+    let mut max_dp = 0f64;
+    for (index, separate_fixture) in ["separate-route", "separate-review", "separate-urgency"]
+        .iter()
+        .enumerate()
+    {
+        let separate = runtime.evaluate(&fixture_request(separate_fixture)).unwrap();
+        assert_eq!(separate.probs.len(), 1);
+        for (a, b) in packed.probs[index].iter().zip(&separate.probs[0]) {
+            max_dp = max_dp.max((a - b).abs());
+        }
+        let packed_top = packed.probs[index]
+            .iter()
+            .enumerate()
+            .max_by(|a, b| a.1.partial_cmp(b.1).unwrap())
+            .map(|(i, _)| i);
+        let separate_top = separate.probs[0]
+            .iter()
+            .enumerate()
+            .max_by(|a, b| a.1.partial_cmp(b.1).unwrap())
+            .map(|(i, _)| i);
+        assert_eq!(packed_top, separate_top, "{separate_fixture}: argmax flip");
+    }
+    eprintln!("{checkpoint} packed-vs-separate max|dp| {max_dp:.8}");
+    assert!(max_dp <= gate, "max|dp| {max_dp} over gate {gate}");
+}
+
+#[cfg(feature = "mlx")]
+#[test]
+#[ignore = "needs the pinned model cache and Apple Silicon"]
+fn mlx_packed_vs_separate_kev_0_8b() {
+    // Frozen K0 gate: packed_vs_separate mlx = 0.01, no flips.
+    check_packed_vs_separate("kev-0.8b", kev_core::runtime::Device::Metal, 0.01);
+}
+
+#[cfg(feature = "candle")]
+#[test]
+#[ignore = "needs the pinned model cache"]
+fn candle_packed_vs_separate_kev_0_6b() {
+    // Frozen K0 gate: packed_vs_separate torch-fp32 = 1e-5, no flips; the
+    // candle path runs the same fp32 precision.
+    check_packed_vs_separate("kev-0.6b", kev_core::runtime::Device::Cpu, 1e-5);
+}
+
 #[cfg(feature = "mlx")]
 #[test]
 #[ignore = "needs the pinned model cache and Apple Silicon"]
