@@ -1,0 +1,45 @@
+[build-system]
+requires = ["hatchling==1.28.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "kev-baseline"
+version = "0.1.0"
+description = "Pinned Python baseline and oracle tooling for kev-rs"
+readme = "README.md"
+requires-python = "==3.13.*"
+dependencies = [
+  "accelerate==1.15.0",
+  "huggingface-hub==1.32.0",
+  "kev[serve,mlx] @ git+https://github.com/jaredpalmer/kev@557598fced1dada75dfbf36ed144dce309ac6ceb",
+  "mlx==0.32.2; sys_platform == 'darwin' and platform_machine == 'arm64'",
+  "mlx-lm==0.31.3; sys_platform == 'darwin' and platform_machine == 'arm64'",
+  "numpy==2.5.3",
+  "peft==0.21.0",
+  "safetensors==0.8.0",
+  "tokenizers==0.23.2",
+  "torch==2.8.0",
+  "transformers==5.17.0",
+]
+
+[dependency-groups]
+dev = [
+  "pytest==9.1.1",
+]
+
+[project.scripts]
+kev-fetch = "kev_baseline.fetch:main"
+kev-env = "kev_baseline.env:main"
+kev-convert-head = "kev_baseline.convert_head:main"
+kev-goldens = "kev_baseline.goldens:main"
+kev-compare-goldens = "kev_baseline.compare_paths:main"
+kev-bench = "kev_baseline.bench:main"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/kev_baseline"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
