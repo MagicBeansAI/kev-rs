@@ -1,0 +1,33 @@
+{
+  "id": "repeat-mixed",
+  "description": "Same request evaluated twice; the second pass uses the state prefix cache and must match the first.",
+  "repeat": 2,
+  "request": {
+    "state": "Support ticket #4821 from ACME Logistics, filed 2026-09-20.\nSubject: Invoices double-charged after plan upgrade.\nBody: We upgraded from Team to Business on September 12, 2026. Since then our card was charged twice for the same invoice (INV-3301 and INV-3302, both $1,240). Finance flagged it. We need a refund or credit before our quarter closes. We are otherwise happy with the product.\nCustomer plan: Business (annual). Seats: 42. Account age: 3 years. Previous tickets: 2 (both resolved). Churn risk score: low.",
+    "model": "kev-latest",
+    "questions": {
+      "route": {
+        "type": "choice",
+        "instructions": "Which team should handle this ticket?",
+        "criteria": {
+          "billing": "Payments, invoices, refunds and plan changes.",
+          "technical": "Bugs, outages and integration problems.",
+          "account": "Seat management, renewals and contract questions."
+        }
+      },
+      "review": {
+        "type": "noul",
+        "instructions": "Does this ticket need review by a human manager before reply?"
+      },
+      "urgency": {
+        "type": "score",
+        "instructions": "How urgent is this ticket?",
+        "criteria": [
+          "low",
+          "medium",
+          "high"
+        ]
+      }
+    }
+  }
+}

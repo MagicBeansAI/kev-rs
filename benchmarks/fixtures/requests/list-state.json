@@ -1,0 +1,21 @@
+{
+  "id": "list-state",
+  "description": "List state with a nested object.",
+  "request": {
+    "state": [
+      "Event 1: upgrade processed 2026-09-12",
+      "Event 2: charge INV-3301 $1,240",
+      "Event 3: charge INV-3302 $1,240",
+      {
+        "note": "finance flagged duplicate"
+      }
+    ],
+    "model": "kev-latest",
+    "questions": {
+      "review": {
+        "type": "noul",
+        "instructions": "Does this ticket need review by a human manager before reply?"
+      }
+    }
+  }
+}

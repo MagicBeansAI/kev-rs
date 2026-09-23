@@ -1,0 +1,14 @@
+{
+  "id": "unicode-state",
+  "description": "CJK, Arabic (RTL), emoji and accents; tokenizer parity risk.",
+  "request": {
+    "state": "チケット: 請求書が二重になっています。 فاتورة مكررة. Emoji: 🧾💳❌. Accented: réclamation déjà signée.",
+    "model": "kev-latest",
+    "questions": {
+      "review": {
+        "type": "noul",
+        "instructions": "Does this ticket need review by a human manager before reply?"
+      }
+    }
+  }
+}

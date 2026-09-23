@@ -1,0 +1,14 @@
+{
+  "id": "null-state",
+  "description": "Null state renders to empty text.",
+  "request": {
+    "state": null,
+    "model": "kev-latest",
+    "questions": {
+      "review": {
+        "type": "noul",
+        "instructions": "Does this ticket need review by a human manager before reply?"
+      }
+    }
+  }
+}

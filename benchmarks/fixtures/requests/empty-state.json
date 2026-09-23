@@ -1,0 +1,14 @@
+{
+  "id": "empty-state",
+  "description": "Empty string state.",
+  "request": {
+    "state": "",
+    "model": "kev-latest",
+    "questions": {
+      "review": {
+        "type": "noul",
+        "instructions": "Does this ticket need review by a human manager before reply?"
+      }
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "id": "choice-1",
+  "description": "Degenerate one-option choice; upstream still runs inference.",
+  "request": {
+    "state": "Support ticket #4821 from ACME Logistics, filed 2026-09-20.\nSubject: Invoices double-charged after plan upgrade.\nBody: We upgraded from Team to Business on September 12, 2026. Since then our card was charged twice for the same invoice (INV-3301 and INV-3302, both $1,240). Finance flagged it. We need a refund or credit before our quarter closes. We are otherwise happy with the product.\nCustomer plan: Business (annual). Seats: 42. Account age: 3 years. Previous tickets: 2 (both resolved). Churn risk score: low.",
+    "model": "kev-latest",
+    "questions": {
+      "only": {
+        "type": "choice",
+        "instructions": "Pick the only available queue.",
+        "criteria": {
+          "general": "The single catch-all queue."
+        }
+      }
+    }
+  }
+}

@@ -33,14 +33,11 @@ CHECKPOINTS = {
     "kev-0.6b": {"repo": "jaredpalmer/kev-0.6b", "revision": "dece6dba8d43f0f7ded45e9f5b9df12474d90843"},
 }
 
-# Files kev needs at inference time, plus the model card for provenance.
-ADAPTER_PATTERNS = (
-    "adapter_config.json",
-    "adapter_model.safetensors",
-    "head.pt",
-    "README.md",
-    "provenance.json",
-)
+# Everything upstream's snapshot_download would take (checkpoint.resolve_run
+# uses allow_patterns *.json/*.safetensors/*.pt/*.txt/*.jinja), plus the model
+# card for provenance. Pinning the same set keeps every file the runtime can
+# touch under the manifest.
+ADAPTER_SUFFIXES = (".json", ".safetensors", ".pt", ".txt", ".jinja")
 
 BASE_PATTERNS_SUFFIXES = (".json", ".safetensors", ".txt", ".jinja")
 BASE_EXCLUDE = (".gitattributes",)
@@ -149,7 +146,11 @@ def main() -> None:
         repo, revision = pin["repo"], pin["revision"]
         log(f"adapter {repo} @ {revision[:12]}")
         available = repo_files(api, repo, revision)
-        wanted = [f for f in ADAPTER_PATTERNS if f in available]
+        wanted = [
+            f
+            for f in available
+            if f == "README.md" or (f.endswith(ADAPTER_SUFFIXES) and f not in BASE_EXCLUDE)
+        ]
         entries = fetch_files(repo, revision, wanted)
         sources[name] = {
             "url": f"https://huggingface.co/{repo}",

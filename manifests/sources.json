@@ -31,51 +31,7 @@
       "weights_dtype": null
     }
   },
-  "converted": {
-    "kev-0.6b": {
-      "directory": ".cache/kev/converted/kev-0.6b",
-      "files": {
-        "head.meta.json": {
-          "bytes": 1869,
-          "sha256": "a11888dda7c4e0ee15935ad7119a27d8b6382dc1cabf2be5bd5d4864611f85bc"
-        },
-        "head.safetensors": {
-          "bytes": 2099504,
-          "sha256": "006201e630a8cdef3386e803e38d6374786c557cf7b5d8637a4774b52f075202"
-        }
-      },
-      "source_head_pt_sha256": "ce6cd9ffc54db41c179b65a33d60973dc8280c29e886218eb3ec07dc28d6f28b"
-    },
-    "kev-0.8b": {
-      "directory": ".cache/kev/converted/kev-0.8b",
-      "files": {
-        "head.meta.json": {
-          "bytes": 2715,
-          "sha256": "9173fce1960cee16f73d7751aacc8b52da35352e73f7c89505ea25fe76965cb9"
-        },
-        "head.safetensors": {
-          "bytes": 2099504,
-          "sha256": "5a5649092c2c08bcb7cb3e6217f1a0d598e3dcdea68f84a2506644b555f8820b"
-        }
-      },
-      "source_head_pt_sha256": "39f4343ccccc65e583bbfff0de0e11bfedb849fcfaaf94b50ac4f2b73bc79c65"
-    },
-    "kev-4b": {
-      "directory": ".cache/kev/converted/kev-4b",
-      "files": {
-        "head.meta.json": {
-          "bytes": 2638,
-          "sha256": "b526564587af43975d75eb0875fa667cd2867f54b0e5b75618d2859dc3ef90c9"
-        },
-        "head.safetensors": {
-          "bytes": 5245232,
-          "sha256": "e51e48f126620ba27fd928b69af128a03c793e956926e44a2e71263b1618f72e"
-        }
-      },
-      "source_head_pt_sha256": "d8f796da36ff7bd7c0fb9496b452139bb7851af4fc82b07b500b682d3f721d6a"
-    }
-  },
-  "generated_at": "2026-09-23T14:44:57+00:00",
+  "generated_at": "2026-09-23T14:54:47+00:00",
   "python_environment": {
     "packages": {
       "accelerate": "1.15.0",
@@ -247,13 +203,49 @@
           "bytes": 40419816,
           "sha256": "deaab63b61f95d628503831e8b336e1c3e334b9a42d3530d979a5149b429c492"
         },
+        "added_tokens.json": {
+          "bytes": 707,
+          "sha256": "c0284b582e14987fbd3d5a2cb2bd139084371ed9acbae488829a1c900833c680"
+        },
         "head.pt": {
           "bytes": 2102399,
           "sha256": "ce6cd9ffc54db41c179b65a33d60973dc8280c29e886218eb3ec07dc28d6f28b"
         },
+        "merges.txt": {
+          "bytes": 1671853,
+          "sha256": "8831e4f1a044471340f7c0a83d7bd71306a5b867e95fd870f74d0c5308a904d5"
+        },
         "provenance.json": {
           "bytes": 2848,
           "sha256": "321bc9db7427b490ad943fa33576c7e01f5da4c20da1036fcbfee996f4b28f10"
+        },
+        "result.json": {
+          "bytes": 68311,
+          "sha256": "44c04dd8ce857727254327682add291f5e3cfa6f0c531f2eede5542468df4c16"
+        },
+        "special_tokens_map.json": {
+          "bytes": 616,
+          "sha256": "6676f091c8bc4d1b50146427cfde92073402866b87b6e39223227931b70083e9"
+        },
+        "tokenizer.json": {
+          "bytes": 11422654,
+          "sha256": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4"
+        },
+        "tokenizer_config.json": {
+          "bytes": 5407,
+          "sha256": "67e5a0a11cd35f9c00ee52e0af4cdc0baa75fea0cb5fce7d1beb251b4621d15c"
+        },
+        "training_config.json": {
+          "bytes": 1047,
+          "sha256": "ab20e55cbb832f409de9daf42f868b69be1eb59e51720302b166bc560fd8d240"
+        },
+        "training_metrics.json": {
+          "bytes": 323,
+          "sha256": "71bfc69b05e4c9d7fdd0d3caf130841cdcf4594789ae081410b202fa8d95075e"
+        },
+        "vocab.json": {
+          "bytes": 2776833,
+          "sha256": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910"
         }
       },
       "license": "Apache-2.0",
@@ -281,6 +273,26 @@
         "provenance.json": {
           "bytes": 3120,
           "sha256": "a42b6099fb1a4103ce7b2db5329db4bc3b9afb7517380c441d954cd2ee3f3c66"
+        },
+        "result.json": {
+          "bytes": 73917,
+          "sha256": "a0464a949550172f6443e79a2f1ac30239b2f9ff431c6026824ad4b69f69cd9d"
+        },
+        "tokenizer.json": {
+          "bytes": 19989325,
+          "sha256": "06b9509352d2af50381ab2247e083b80d32d5c0aba91c272ca9ff729b6a0e523"
+        },
+        "tokenizer_config.json": {
+          "bytes": 1128,
+          "sha256": "8671bed7c852ce9e661be94f179a7b4ffd091c2a65aea0363e5501c20318ee45"
+        },
+        "training_config.json": {
+          "bytes": 1625,
+          "sha256": "c7d54ce956bda4e3b4d822883f11f33a37f66255c6aaac03ca90c3bc6b6b6aac"
+        },
+        "training_metrics.json": {
+          "bytes": 321,
+          "sha256": "b083c763fc4d63e908bf11cc2a2f1038737e368752c819ac17f2bbbec7ba567c"
         }
       },
       "license": "Apache-2.0",
@@ -301,13 +313,49 @@
           "bytes": 129924032,
           "sha256": "9797de69a42188e411b17b7b4fcb66a23374dcebc21d71a7a66f836b5d34df2b"
         },
+        "added_tokens.json": {
+          "bytes": 707,
+          "sha256": "c0284b582e14987fbd3d5a2cb2bd139084371ed9acbae488829a1c900833c680"
+        },
         "head.pt": {
           "bytes": 5248767,
           "sha256": "d8f796da36ff7bd7c0fb9496b452139bb7851af4fc82b07b500b682d3f721d6a"
         },
+        "merges.txt": {
+          "bytes": 1671853,
+          "sha256": "8831e4f1a044471340f7c0a83d7bd71306a5b867e95fd870f74d0c5308a904d5"
+        },
         "provenance.json": {
           "bytes": 3140,
           "sha256": "841b2724fd9f9043c0704530b74db1dddaebb117103fa6a68d6c87f741591e7d"
+        },
+        "result.json": {
+          "bytes": 73953,
+          "sha256": "ca7527f50e37194d2026cfbf829756045d466bf5071f54bd1975691723b4b1a4"
+        },
+        "special_tokens_map.json": {
+          "bytes": 616,
+          "sha256": "6676f091c8bc4d1b50146427cfde92073402866b87b6e39223227931b70083e9"
+        },
+        "tokenizer.json": {
+          "bytes": 19989325,
+          "sha256": "06b9509352d2af50381ab2247e083b80d32d5c0aba91c272ca9ff729b6a0e523"
+        },
+        "tokenizer_config.json": {
+          "bytes": 1128,
+          "sha256": "8671bed7c852ce9e661be94f179a7b4ffd091c2a65aea0363e5501c20318ee45"
+        },
+        "training_config.json": {
+          "bytes": 1586,
+          "sha256": "38aea67988b8958056bf7444f9a8f20aebcb1d6bdb7e83b0eb8d357f53be728b"
+        },
+        "training_metrics.json": {
+          "bytes": 320,
+          "sha256": "a4174b71ad675c48cd962e53a171b29d4152cdfa8ebbfd33403aaa01b737bcbd"
+        },
+        "vocab.json": {
+          "bytes": 2776833,
+          "sha256": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910"
         }
       },
       "license": "Apache-2.0",

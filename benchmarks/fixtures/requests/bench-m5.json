@@ -1,0 +1,57 @@
+{
+  "id": "bench-m5",
+  "description": "Benchmark workload matching upstream's M5 table: five 3-option questions on a ~270-token state.",
+  "repeat": 2,
+  "bench": true,
+  "request": {
+    "state": "Order #88231 placed 2026-09-18 by Nordwind Outfitters (wholesale tier).\nItems: 120 units SKU-CF-panel, 40 units SKU-AL-bracket, 6 units SKU-resin-kit.\nShipping: split shipment requested, first leg to Hamburg DE, second to Oslo NO.\nPayment: net-30 invoice, credit limit $50,000, current exposure $31,200.\nHistory: 14 prior orders, one late payment (11 days, resolved), no returns.\nNotes from sales: customer asked about volume discount at 200 units; warehouse reports SKU-resin-kit lot QA hold pending inspection results expected 2026-09-25. Customer wants confirmation before 2026-09-26. Weather delay risk on the Oslo leg is flagged as moderate this week. Account manager: J. Weber. Region: EMEA. Priority tier: gold.\nLogistics addendum: carrier quotes received from two freight partners; the Hamburg leg books at 4 pallets, the Oslo leg at 2 pallets plus one crate. Insurance rider covers transit damage up to $75,000 per leg. Customs pre-clearance forms for Norway were filed 2026-09-19 and are pending.",
+    "model": "kev-latest",
+    "questions": {
+      "hold": {
+        "type": "choice",
+        "instructions": "Should the whole order wait for the QA hold to clear?",
+        "criteria": {
+          "yes": "Proceed.",
+          "no": "Do not proceed.",
+          "defer": "Wait for more information."
+        }
+      },
+      "split": {
+        "type": "choice",
+        "instructions": "Approve the split shipment as requested?",
+        "criteria": {
+          "yes": "Proceed.",
+          "no": "Do not proceed.",
+          "defer": "Wait for more information."
+        }
+      },
+      "credit": {
+        "type": "choice",
+        "instructions": "Is the net-30 credit acceptable for this order?",
+        "criteria": {
+          "yes": "Proceed.",
+          "no": "Do not proceed.",
+          "defer": "Wait for more information."
+        }
+      },
+      "discount": {
+        "type": "choice",
+        "instructions": "Offer the volume discount now?",
+        "criteria": {
+          "yes": "Proceed.",
+          "no": "Do not proceed.",
+          "defer": "Wait for more information."
+        }
+      },
+      "escalate": {
+        "type": "choice",
+        "instructions": "Escalate to the regional manager?",
+        "criteria": {
+          "yes": "Proceed.",
+          "no": "Do not proceed.",
+          "defer": "Wait for more information."
+        }
+      }
+    }
+  }
+}

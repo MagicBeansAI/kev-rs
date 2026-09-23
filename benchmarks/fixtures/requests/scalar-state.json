@@ -1,0 +1,14 @@
+{
+  "id": "scalar-state",
+  "description": "Numeric scalar state.",
+  "request": {
+    "state": 42,
+    "model": "kev-latest",
+    "questions": {
+      "review": {
+        "type": "noul",
+        "instructions": "Does this ticket need review by a human manager before reply?"
+      }
+    }
+  }
+}

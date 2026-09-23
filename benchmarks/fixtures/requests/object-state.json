@@ -1,0 +1,41 @@
+{
+  "id": "object-state",
+  "description": "Nested object state flattened by render().",
+  "request": {
+    "state": {
+      "customer": {
+        "name": "ACME Logistics",
+        "plan": "Business",
+        "seats": 42
+      },
+      "issue": {
+        "kind": "billing",
+        "duplicates": [
+          "INV-3301",
+          "INV-3302"
+        ],
+        "amount_usd": 1240
+      },
+      "flags": [
+        {
+          "churn_risk": "low"
+        },
+        {
+          "vip": false
+        }
+      ]
+    },
+    "model": "kev-latest",
+    "questions": {
+      "route": {
+        "type": "choice",
+        "instructions": "Which team should handle this ticket?",
+        "criteria": {
+          "billing": "Payments, invoices, refunds and plan changes.",
+          "technical": "Bugs, outages and integration problems.",
+          "account": "Seat management, renewals and contract questions."
+        }
+      }
+    }
+  }
+}
