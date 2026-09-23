@@ -1,0 +1,56 @@
+{
+  "determinism_first_fixture": {
+    "max_abs_diff": 0.0
+  },
+  "fixtures": [
+    "choice-3",
+    "escape-state",
+    "mixed-packed-3",
+    "noul-basic",
+    "score-3",
+    "separate-review",
+    "separate-route",
+    "separate-urgency"
+  ],
+  "meta": {
+    "backend": "torch",
+    "base": "Qwen/Qwen3.5-4B-Base",
+    "base_revision": "1001bb4d826a52d1f399e183466143f4da7b741b",
+    "checkpoint": "kev-4b",
+    "device": "cpu",
+    "dtype": "float32",
+    "generated_at": "2026-09-23T15:53:21+00:00",
+    "hybrid": true,
+    "machine": "arm64",
+    "oracle_path": "torch-fp32",
+    "packages": {
+      "accelerate": "1.15.0",
+      "huggingface-hub": "1.32.0",
+      "kev": "0.1.0",
+      "mlx": "0.32.2",
+      "mlx-lm": "0.31.3",
+      "numpy": "2.5.3",
+      "peft": "0.21.0",
+      "pydantic": "2.13.5",
+      "safetensors": "0.8.0",
+      "tokenizers": "0.23.2",
+      "torch": "2.8.0",
+      "transformers": "5.17.0"
+    },
+    "platform": "macOS-26.2-arm64-arm-64bit-Mach-O",
+    "prefix_min_tokens": 0,
+    "python": "3.13.12",
+    "run": "jaredpalmer/kev-4b@485ace8703592fcf405488b262449990824cfed1",
+    "special_tokens": [
+      "<|fim_prefix|>",
+      "<|fim_middle|>",
+      "<|box_start|>",
+      "<|box_end|>",
+      "<|fim_suffix|>"
+    ],
+    "temperature": 2.1435469250725863,
+    "upstream_kev_sha": "557598fced1dada75dfbf36ed144dce309ac6ceb"
+  },
+  "subset_reason": "kev-4b fp32 needs ~16.5 GB weights; this host has 18 GB RAM and swaps heavily. Core subset generated locally (primitives, packed-vs-separate, escaping); the full set needs a >=32 GB host. 4B MLX goldens cover all 22 fixtures; upstream runs/r4-mlx-parity-4b (1024 records) anchors the MLX-vs-fp32 envelope.",
+  "total_seconds": 1363.1
+}

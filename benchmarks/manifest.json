@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "status": "Frozen at K0 (2026-09-24), before any Rust code exists. Amendments require a dated entry in `amendments` written before Rust timings are inspected.",
+  "host": {
+    "model": "Mac15,6 (MacBook Pro, Apple M3 Pro)",
+    "memory_gb": 18,
+    "notes": "18 GB is below the ~16.5 GB kev-4b fp32 torch footprint; the 4B fp32 oracle ran a documented core subset under swap and is not benchmarked."
+  },
+  "baseline": {
+    "python": "3.13.12",
+    "upstream_kev": "557598fced1dada75dfbf36ed144dce309ac6ceb",
+    "torch": "2.8.0",
+    "mlx": "0.32.2",
+    "mlx_lm": "0.31.3",
+    "transformers": "5.17.0",
+    "gdn_kernels": "reference PyTorch fallbacks (causal_conv1d and flash-linear-attention not installed); upstream's own environment ships the same fallbacks on macOS CPU"
+  },
+  "workload": {
+    "fixture": "bench-m5",
+    "description": "Five 3-option choice questions on a 296-token state; the shape behind upstream's M5 README table.",
+    "protocol": "new_state = probs_and_prefix (full pass, prefix kept); repeated_state = probs_with_prefix (branches only). Median of 20 iterations after 3 warmup, wall clock with device sync.",
+    "metric": "median_ms"
+  },
+  "python_reference_medians_ms": {
+    "kev-0.8b/mlx": { "new_state": 163.12, "repeated_state": 66.3 },
+    "kev-4b/mlx": { "new_state": 950.6, "repeated_state": 372.71 },
+    "kev-0.8b/torch-fp32-cpu": { "new_state": 5147.6, "repeated_state": 3228.32 },
+    "kev-0.6b/torch-fp32-cpu": { "new_state": 491.63, "repeated_state": 239.72 },
+    "source": "benchmarks/results/l0-bench/"
+  },
+  "upstream_published_context": {
+    "machine": "Apple M5, 32 GB",
+    "kev-0.8b/mlx": { "new_state": 149, "repeated_state": 28 },
+    "kev-4b/mlx": { "new_state": 721, "repeated_state": 136 },
+    "note": "Context only, never a target: a different machine. Rust timings on this host are compared against this host's Python medians."
+  },
+  "acceptance": {
+    "k2_metal": "Rust MLX median <= 1.10x the Python MLX median on this host for new_state and repeated_state on bench-m5 (kev-0.8b and, where the checkpoint fits, kev-4b); p95 no more than 5% worse than the Python p95. No speedup is assumed.",
+    "k2_cpu": "Correctness-gated only: CPU parity must hold; CPU speed is recorded, not gated.",
+    "rules": [
+      "Benchmarks run on an idle host; the 1-minute load average is recorded in every result.",
+      "Result files under benchmarks/results/ are immutable; a rerun gets a new run id.",
+      "Timings taken outside an acceptance run are labelled 'not acceptance'.",
+      "No comparisons against upstream's M5 numbers are claimed as acceptance evidence."
+    ]
+  },
+  "amendments": []
+}

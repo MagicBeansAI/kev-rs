@@ -56,7 +56,11 @@ def question_stats(p_ref: list[float], p_alt: list[float]) -> dict:
 
 
 def compare_mlx(checkpoint: str) -> dict | None:
-    fixtures = sorted(p.stem for p in (paths.goldens_dir() / checkpoint / "torch-fp32").glob("*.json") if p.stem != "run")
+    fixtures = sorted(
+        p.stem
+        for p in (paths.goldens_dir() / checkpoint / "torch-fp32").glob("*.json")
+        if p.stem not in ("run", "packed-vs-separate")
+    )
     per_fixture = {}
     all_stats = []
     for fixture in fixtures:
