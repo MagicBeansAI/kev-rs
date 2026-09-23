@@ -247,7 +247,13 @@ fn assemble_model_dir(checkpoint: &str) -> PathBuf {
     let manifest = manifest();
     let (base_dir, adapter_dir) = checkpoint_dirs(&manifest, checkpoint);
     let converted = repo_root().join(".cache/kev/converted").join(checkpoint);
-    let out = std::env::temp_dir().join(format!("kev-core-test-{checkpoint}"));
+    // Unique per call: tests run concurrently and must not share a dir.
+    static COUNTER: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+    let unique = COUNTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    let out = std::env::temp_dir().join(format!(
+        "kev-core-test-{checkpoint}-{}-{unique}",
+        std::process::id()
+    ));
     let _ = std::fs::remove_dir_all(&out);
     std::fs::create_dir_all(&out).unwrap();
     std::os::unix::fs::symlink(&base_dir, out.join("base")).unwrap();

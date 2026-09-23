@@ -17,8 +17,6 @@ type AnyResult<T> = anyhow::Result<T>;
 
 #[derive(Debug, Deserialize)]
 struct Config {
-    hidden_size: usize,
-    intermediate_size: usize,
     num_hidden_layers: usize,
     num_attention_heads: usize,
     num_key_value_heads: usize,
@@ -224,7 +222,7 @@ impl CandleBackbone {
         let ids_t = Tensor::from_vec(ids.to_vec(), l, &self.device)?;
         let mut h = embed.index_select(&ids_t, 0)?; // [L, hidden]
 
-        for layer in 0..cfg.num_hidden_layers {
+        for (layer, state) in states.iter_mut().enumerate() {
             let p = format!("layers.{layer}");
             let normed = self.rms_norm(
                 &h,
@@ -261,7 +259,6 @@ impl CandleBackbone {
             let queries = self.rope(&queries, pos_offset)?;
             let keys = self.rope(&keys, pos_offset)?;
 
-            let state = &mut states[layer];
             let all_keys = match &state.keys {
                 Some(cached) => Tensor::cat(&[cached, &keys], 1)?,
                 None => keys,
@@ -302,9 +299,8 @@ impl CandleBackbone {
             let silu = (&gate * candle_nn::ops::sigmoid(&gate)?)?;
             let mlp = (silu * up)?.matmul(&self.w(&format!("{p}.mlp.down_proj.weight"))?.t()?)?;
             h = (mid + mlp)?;
-            let _ = cfg.intermediate_size; // shape check happens in matmul
         }
-        Ok(self.rms_norm(&h, self.w("norm.weight")?, cfg.rms_norm_eps)?)
+        self.rms_norm(&h, self.w("norm.weight")?, cfg.rms_norm_eps)
     }
 
     fn fresh_states(&self) -> Vec<KvState> {

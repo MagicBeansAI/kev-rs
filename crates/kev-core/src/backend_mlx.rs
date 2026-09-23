@@ -52,7 +52,7 @@ struct TopConfig {
 
 impl TextConfig {
     fn is_linear(&self, layer_idx: usize) -> bool {
-        (layer_idx + 1) % self.full_attention_interval != 0
+        !(layer_idx + 1).is_multiple_of(self.full_attention_interval)
     }
     fn rotary_dims(&self) -> i32 {
         (self.head_dim as f32 * self.rope_parameters.partial_rotary_factor) as i32
@@ -282,7 +282,7 @@ fn merge_lora(weights: &mut HashMap<String, Array>, adapter_dir: &Path) -> AnyRe
                 &lora_b.as_dtype(Dtype::Float32)?,
                 &lora_a.as_dtype(Dtype::Float32)?,
             )?
-            .multiply(&Array::from_f32(alpha))?;
+            .multiply(Array::from_f32(alpha))?;
             let out = base
                 .as_dtype(Dtype::Float32)?
                 .add(&delta)?

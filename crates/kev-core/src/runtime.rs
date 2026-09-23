@@ -129,6 +129,9 @@ fn is_hybrid(base_dir: &std::path::Path) -> Result<bool> {
 }
 
 impl Runtime {
+    // Without a backend feature both device arms return early, making the
+    // final constructor unreachable in that configuration only.
+    #[cfg_attr(not(any(feature = "mlx", feature = "candle")), allow(unreachable_code))]
     pub fn load(options: &LoadOptions) -> Result<Self> {
         let base_dir = options.model_dir.join("base");
         let adapter_dir = options.model_dir.join("adapter");
