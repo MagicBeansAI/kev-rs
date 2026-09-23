@@ -1,0 +1,32 @@
+{
+  "argmax_flips": 0,
+  "checkpoint": "kev-4b",
+  "max_abs_dp": 0.004670083522796631,
+  "oracle_path": "mlx",
+  "questions": [
+    {
+      "argmax_flip": false,
+      "max_abs_dp": 0.0005052685737609863,
+      "mean_abs_dp": 0.00033686356619000435,
+      "question": "route",
+      "ref_top2_gap": 0.9616515673696995,
+      "wire_answers_equal": false
+    },
+    {
+      "argmax_flip": false,
+      "max_abs_dp": 0.00106048583984375,
+      "mean_abs_dp": 0.00106048583984375,
+      "question": "review",
+      "ref_top2_gap": 0.35996177792549133,
+      "wire_answers_equal": false
+    },
+    {
+      "argmax_flip": false,
+      "max_abs_dp": 0.004670083522796631,
+      "mean_abs_dp": 0.003113360454638799,
+      "question": "urgency",
+      "ref_top2_gap": 0.40895378589630127,
+      "wire_answers_equal": false
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "argmax_flips": 0,
+  "checkpoint": "kev-0.6b",
+  "max_abs_dp": 1.1026859283447266e-06,
+  "oracle_path": "torch-fp32",
+  "questions": [
+    {
+      "argmax_flip": false,
+      "max_abs_dp": 2.3283064365386963e-08,
+      "mean_abs_dp": 1.3193736473719278e-08,
+      "question": "route",
+      "ref_top2_gap": 0.9890553448349237,
+      "wire_answers_equal": true
+    },
+    {
+      "argmax_flip": false,
+      "max_abs_dp": 9.238719940185547e-07,
+      "mean_abs_dp": 9.08970832824707e-07,
+      "question": "review",
+      "ref_top2_gap": 0.17469099164009094,
+      "wire_answers_equal": true
+    },
+    {
+      "argmax_flip": false,
+      "max_abs_dp": 1.1026859283447266e-06,
+      "mean_abs_dp": 7.326404253641764e-07,
+      "question": "urgency",
+      "ref_top2_gap": 0.20909571647644043,
+      "wire_answers_equal": true
+    }
+  ]
+}

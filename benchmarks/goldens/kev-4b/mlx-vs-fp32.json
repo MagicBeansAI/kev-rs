@@ -1,0 +1,48 @@
+{
+  "alternative": "mlx",
+  "argmax_flip_details": [],
+  "argmax_flips": 0,
+  "checkpoint": "kev-4b",
+  "fixtures": {
+    "noul-basic": {
+      "questions": [
+        {
+          "argmax_flip": false,
+          "max_abs_dp": 0.0010885000228881836,
+          "mean_abs_dp": 0.0010884851217269897,
+          "question": "review",
+          "ref_top2_gap": 0.3642597198486328
+        }
+      ],
+      "wire_answers_changed": {
+        "review": {
+          "fp32": {
+            "noul": 0.3179,
+            "type": "noul"
+          },
+          "mlx": {
+            "noul": 0.319,
+            "type": "noul"
+          }
+        }
+      }
+    }
+  },
+  "max_abs_dp": 0.0010885000228881836,
+  "mean_abs_dp": 0.0010884851217269897,
+  "questions": 1,
+  "reference": "torch-fp32",
+  "upstream_reference_figures": {
+    "kev-0.8b": {
+      "argmax_flips": "4 (0.3%)",
+      "max_abs_dp": 0.05423,
+      "mean_abs_dp": 0.0023
+    },
+    "kev-4b": {
+      "argmax_flips": "1 of 1264",
+      "max_abs_dp": 0.025242,
+      "mean_abs_dp": 0.0016
+    },
+    "source": "upstream runs/r4-mlx-parity-*/report.json at the pinned commit"
+  }
+}

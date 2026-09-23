@@ -1,0 +1,69 @@
+{
+  "determinism_first_fixture": {
+    "max_abs_diff": 0.0
+  },
+  "fixtures": [
+    "bench-m5",
+    "choice-1",
+    "choice-26",
+    "choice-3",
+    "empty-state",
+    "escape-options",
+    "escape-state",
+    "list-state",
+    "long-state",
+    "mixed-packed-3",
+    "noul-basic",
+    "noul-criteria",
+    "null-state",
+    "object-state",
+    "repeat-mixed",
+    "scalar-state",
+    "score-3",
+    "score-5",
+    "separate-review",
+    "separate-route",
+    "separate-urgency",
+    "unicode-state"
+  ],
+  "meta": {
+    "backend": "torch",
+    "base": "Qwen/Qwen3-0.6B-Base",
+    "base_revision": "da87bfb608c14b7cf20ba1ce41287e8de496c0cd",
+    "checkpoint": "kev-0.6b",
+    "device": "cpu",
+    "dtype": "float32",
+    "generated_at": "2026-09-23T15:00:11+00:00",
+    "hybrid": false,
+    "machine": "arm64",
+    "oracle_path": "torch-fp32",
+    "packages": {
+      "accelerate": "1.15.0",
+      "huggingface-hub": "1.32.0",
+      "kev": "0.1.0",
+      "mlx": "0.32.2",
+      "mlx-lm": "0.31.3",
+      "numpy": "2.5.3",
+      "peft": "0.21.0",
+      "pydantic": "2.13.5",
+      "safetensors": "0.8.0",
+      "tokenizers": "0.23.2",
+      "torch": "2.8.0",
+      "transformers": "5.17.0"
+    },
+    "platform": "macOS-26.2-arm64-arm-64bit-Mach-O",
+    "prefix_min_tokens": 384,
+    "python": "3.13.12",
+    "run": "jaredpalmer/kev-0.6b@dece6dba8d43f0f7ded45e9f5b9df12474d90843",
+    "special_tokens": [
+      "<|fim_prefix|>",
+      "<|fim_middle|>",
+      "<|box_start|>",
+      "<|box_end|>",
+      "<|fim_suffix|>"
+    ],
+    "temperature": 1.0,
+    "upstream_kev_sha": "557598fced1dada75dfbf36ed144dce309ac6ceb"
+  },
+  "total_seconds": 72.9
+}

@@ -1,0 +1,231 @@
+{
+  "encoding": {
+    "decide_idx": [
+      20
+    ],
+    "ids": [
+      151659,
+      151660,
+      21468,
+      419,
+      11727,
+      1184,
+      3395,
+      553,
+      264,
+      3738,
+      6645,
+      1573,
+      9851,
+      30,
+      151648,
+      2152,
+      151649,
+      151648,
+      9693,
+      151649,
+      151661
+    ],
+    "opt_idx": [
+      [
+        16,
+        19
+      ]
+    ],
+    "option_isolation": false,
+    "pos": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20
+    ],
+    "rows": [
+      {
+        "decide": 19,
+        "ids": [
+          151660,
+          21468,
+          419,
+          11727,
+          1184,
+          3395,
+          553,
+          264,
+          3738,
+          6645,
+          1573,
+          9851,
+          30,
+          151648,
+          2152,
+          151649,
+          151648,
+          9693,
+          151649,
+          151661
+        ],
+        "opts": [
+          15,
+          18
+        ],
+        "pos": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20
+        ]
+      }
+    ],
+    "seg": [
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "state_tokens": 1,
+    "state_truncated": false
+  },
+  "fixture": "null-state",
+  "hidden_states_npz": "null-state.npz",
+  "instrumented_matches_native": {
+    "max_abs_diff": 0.0
+  },
+  "logits_calibrated": [
+    [
+      4.819979667663574,
+      5.506258010864258
+    ]
+  ],
+  "logits_raw": [
+    [
+      4.819979667663574,
+      5.506258010864258
+    ]
+  ],
+  "meta": {
+    "backend": "torch",
+    "base": "Qwen/Qwen3-0.6B-Base",
+    "base_revision": "da87bfb608c14b7cf20ba1ce41287e8de496c0cd",
+    "checkpoint": "kev-0.6b",
+    "device": "cpu",
+    "dtype": "float32",
+    "generated_at": "2026-09-23T15:00:11+00:00",
+    "hybrid": false,
+    "machine": "arm64",
+    "oracle_path": "torch-fp32",
+    "packages": {
+      "accelerate": "1.15.0",
+      "huggingface-hub": "1.32.0",
+      "kev": "0.1.0",
+      "mlx": "0.32.2",
+      "mlx-lm": "0.31.3",
+      "numpy": "2.5.3",
+      "peft": "0.21.0",
+      "pydantic": "2.13.5",
+      "safetensors": "0.8.0",
+      "tokenizers": "0.23.2",
+      "torch": "2.8.0",
+      "transformers": "5.17.0"
+    },
+    "platform": "macOS-26.2-arm64-arm-64bit-Mach-O",
+    "prefix_min_tokens": 384,
+    "python": "3.13.12",
+    "run": "jaredpalmer/kev-0.6b@dece6dba8d43f0f7ded45e9f5b9df12474d90843",
+    "special_tokens": [
+      "<|fim_prefix|>",
+      "<|fim_middle|>",
+      "<|box_start|>",
+      "<|box_end|>",
+      "<|fim_suffix|>"
+    ],
+    "temperature": 1.0,
+    "upstream_kev_sha": "557598fced1dada75dfbf36ed144dce309ac6ceb"
+  },
+  "native": {
+    "latency_ms": 81.67,
+    "probs": [
+      [
+        0.33486148715019226,
+        0.6651385426521301
+      ]
+    ]
+  },
+  "questions": [
+    {
+      "id": "review",
+      "instr": "Does this ticket need review by a human manager before reply?",
+      "keys": [
+        "false",
+        "true"
+      ],
+      "options": [
+        "no",
+        "yes"
+      ],
+      "type": "noul"
+    }
+  ],
+  "state_text": "",
+  "wire": {
+    "answers": {
+      "review": {
+        "noul": 0.6651,
+        "type": "noul"
+      }
+    },
+    "usage": {
+      "input_tokens": 21,
+      "output_tokens": 22
+    }
+  }
+}
