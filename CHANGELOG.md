@@ -7,6 +7,20 @@ release workflow.
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-09-24
+
+Documentation-only release so the pinned tag carries documentation that
+describes its own publication state; the runtime code is identical to
+0.1.0.
+
+### Changed
+
+- README and `docs/K3-ADAPTER.md` now describe the published repository,
+  the CI added at publication, the release tag systemone pins, and the
+  post-release tracking issue (#1), instead of the pre-publication
+  "local-only path dependency" state.
+- `kev-core` crate version bumped to 0.1.1 to match the tag.
+
 ## [0.1.0] - 2026-09-24
 
 First tagged release: the `kev-core` library crate, an independent Rust

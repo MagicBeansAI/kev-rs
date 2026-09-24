@@ -61,6 +61,8 @@ frozen gates were touched.
 ## Publication (post-report addendum)
 
 kev-rs was published to <https://github.com/codesoda/kev-rs> and tagged
-`v0.1.0` (commit `799d552e`); systemone's `feat/kev-backend` (PR #18)
-depends on that pinned revision instead of the earlier path dependency,
-and the cpu smoke was re-run against the pin (passed).
+`v0.1.0` (commit `799d552e`), followed by the documentation-only
+`v0.1.1` so the pinned tag describes its own publication state.
+systemone's `feat/kev-backend` (PR #18) depends on the `v0.1.1` tag
+commit instead of the earlier path dependency, and the cpu smoke was
+re-run against the pin (passed).

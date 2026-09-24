@@ -1,6 +1,6 @@
 [package]
 name = "kev-core"
-version = "0.1.0"
+version = "0.1.1"
 description = "Kev decision-model runtime: exact upstream encoding, MLX (Apple Silicon) and CPU backends, fp32 pointer head and calibration"
 edition.workspace = true
 license.workspace = true
