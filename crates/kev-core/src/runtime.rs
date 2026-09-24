@@ -29,6 +29,36 @@ pub struct LoadOptions {
     pub device: Device,
     /// Override the checkpoint temperature (1.0 = raw logits). None = as stored.
     pub temperature: Option<f32>,
+    /// MLX-only memory options; the default is the reference path (bf16
+    /// weights as stored, the state in one pass).
+    pub mlx: MlxOptions,
+}
+
+/// Memory options for the MLX backend. Both are opt-in and gated
+/// separately (`tolerances.json`: `mlx_q8_vs_fp32`,
+/// `state_chunk_vs_single_pass`).
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct MlxOptions {
+    /// Quantize every projection and the embedding after the LoRA merge
+    /// (MLX affine quantization). Only 8-bit with group size 32 is gated.
+    pub quantize: Option<Quantization>,
+    /// Run a new state through the backbone this many tokens at a time,
+    /// bounding activation memory to one chunk; None = one pass.
+    pub state_chunk: Option<usize>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Quantization {
+    pub bits: i32,
+    pub group_size: i32,
+}
+
+impl Quantization {
+    /// The gated configuration: 8-bit, group size 32.
+    pub const Q8: Self = Self {
+        bits: 8,
+        group_size: 32,
+    };
 }
 
 pub struct Evaluation {
@@ -170,6 +200,7 @@ impl Runtime {
                             &base_dir,
                             &adapter_dir,
                             tokenizer.pad_id,
+                            options.mlx,
                         )?),
                         "mlx",
                     )
@@ -182,6 +213,11 @@ impl Runtime {
                 }
             }
             Device::Cpu => {
+                if options.mlx != MlxOptions::default() {
+                    return Err(KevError::Load(
+                        "quantize / state_chunk are MLX options; use device = \"metal\"".into(),
+                    ));
+                }
                 if hybrid {
                     return Err(KevError::Load(
                         "the cpu backend supports the attention-only (Qwen3) generation only \

@@ -275,12 +275,30 @@ fn check_backend(
     gate_max_dp: f64,
     gate_mean_dp: f64,
 ) {
+    check_backend_with(
+        checkpoint,
+        device,
+        Default::default(),
+        gate_max_dp,
+        gate_mean_dp,
+    );
+}
+
+#[cfg(any(feature = "mlx", feature = "candle"))]
+fn check_backend_with(
+    checkpoint: &str,
+    device: kev_core::runtime::Device,
+    mlx: kev_core::runtime::MlxOptions,
+    gate_max_dp: f64,
+    gate_mean_dp: f64,
+) {
     use kev_core::runtime::{LoadOptions, Runtime};
 
     let mut runtime = Runtime::load(&LoadOptions {
         model_dir: assemble_model_dir(checkpoint),
         device,
         temperature: None,
+        mlx,
     })
     .unwrap();
 
@@ -341,6 +359,7 @@ fn check_backend(
                     1.0
                 };
                 assert!(gap < 0.02, "{fixture}: argmax flip on gap {gap}");
+                eprintln!("  flip {fixture}: top-2 gap {gap:.4}");
                 flips.push(fixture.clone());
             }
         }
@@ -351,7 +370,7 @@ fn check_backend(
     }
     let mean_dp = dp_sum / dp_count.max(1) as f64;
     eprintln!(
-        "{checkpoint} [{}]: {questions} questions, max|dp| {:.6} ({}), mean|dp| {:.6}, near-tie flips: {:?}",
+        "{checkpoint} [{} {mlx:?}]: {questions} questions, max|dp| {:.6} ({}), mean|dp| {:.6}, near-tie flips: {:?}",
         runtime.backend_name, worst.0, worst.1, mean_dp, flips
     );
     assert!(
@@ -375,6 +394,7 @@ fn check_packed_vs_separate(checkpoint: &str, device: kev_core::runtime::Device,
         model_dir: assemble_model_dir(checkpoint),
         device,
         temperature: None,
+        mlx: Default::default(),
     })
     .unwrap();
 
@@ -439,6 +459,89 @@ fn mlx_parity_kev_0_8b() {
 #[ignore = "needs the pinned model cache and Apple Silicon"]
 fn mlx_parity_kev_4b() {
     check_backend("kev-4b", kev_core::runtime::Device::Metal, 0.03, 0.004);
+}
+
+#[cfg(feature = "mlx")]
+#[test]
+#[ignore = "needs the pinned model cache and Apple Silicon"]
+fn mlx_q8_parity_kev_0_8b() {
+    // Gate: mlx_q8_vs_fp32 kev-0.8b (tolerances.json, amendment 2026-09-24).
+    let mlx = kev_core::runtime::MlxOptions {
+        quantize: Some(kev_core::runtime::Quantization::Q8),
+        state_chunk: None,
+    };
+    check_backend_with(
+        "kev-0.8b",
+        kev_core::runtime::Device::Metal,
+        mlx,
+        0.15,
+        0.01,
+    );
+}
+
+#[cfg(feature = "mlx")]
+#[test]
+#[ignore = "needs the pinned model cache and Apple Silicon"]
+fn mlx_q8_parity_kev_4b() {
+    // Gate: mlx_q8_vs_fp32 kev-4b (tolerances.json, amendment 2026-09-24).
+    let mlx = kev_core::runtime::MlxOptions {
+        quantize: Some(kev_core::runtime::Quantization::Q8),
+        state_chunk: None,
+    };
+    check_backend_with("kev-4b", kev_core::runtime::Device::Metal, mlx, 0.15, 0.01);
+}
+
+/// The frozen state_chunk_vs_single_pass gate (tolerances.json): every
+/// fixture's probabilities with the state run in small chunks match the
+/// single pass, with no argmax flip. A 16-token chunk forces several chunks
+/// on every fixture state.
+#[cfg(feature = "mlx")]
+#[test]
+#[ignore = "needs the pinned model cache and Apple Silicon"]
+fn mlx_state_chunks_match_single_pass_kev_0_8b() {
+    use kev_core::runtime::{Device, LoadOptions, MlxOptions, Runtime};
+
+    let load = |state_chunk| {
+        Runtime::load(&LoadOptions {
+            model_dir: assemble_model_dir("kev-0.8b"),
+            device: Device::Metal,
+            temperature: None,
+            mlx: MlxOptions {
+                quantize: None,
+                state_chunk,
+            },
+        })
+        .unwrap()
+    };
+    let (mut single, mut chunked) = (load(None), load(Some(16)));
+    let mut max_dp = 0f64;
+    let mut questions = 0usize;
+    for golden_path in golden_files("kev-0.8b", "torch-fp32") {
+        let golden: Value =
+            serde_json::from_str(&std::fs::read_to_string(&golden_path).unwrap()).unwrap();
+        let request = fixture_request(golden["fixture"].as_str().unwrap());
+        let a = single.evaluate(&request).unwrap();
+        let b = chunked.evaluate(&request).unwrap();
+        for (pa, pb) in a.probs.iter().zip(&b.probs) {
+            questions += 1;
+            for (x, y) in pa.iter().zip(pb) {
+                max_dp = max_dp.max((x - y).abs());
+            }
+            let top = |p: &Vec<f64>| {
+                p.iter()
+                    .enumerate()
+                    .max_by(|x, y| x.1.partial_cmp(y.1).unwrap())
+                    .map(|(i, _)| i)
+            };
+            assert_eq!(top(pa), top(pb), "argmax flip under state chunking");
+        }
+    }
+    eprintln!(
+        "kev-0.8b state chunks (16) vs single pass: {questions} questions, max|dp| {max_dp:.8}"
+    );
+    // Amended gate (tolerances.json state_chunk_vs_single_pass): bf16
+    // rounding at chunk boundaries; exact to ~1e-6 with fp32 weights.
+    assert!(max_dp <= 0.02, "max|dp| {max_dp} over gate 0.02");
 }
 
 #[cfg(feature = "candle")]

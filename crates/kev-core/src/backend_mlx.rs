@@ -1,11 +1,13 @@
 //! Qwen3.5 hybrid backbone (Gated DeltaNet + gated attention) on MLX,
 //! ported from mlx-lm 0.31.3 and verified against the K0 goldens at K1.
-//! bf16 weights as stored, fp32 LoRA merge on the CPU stream, fp32 GDN
+//! bf16 weights as stored (or MLX affine-quantized after the merge, opt-in:
+//! `MlxOptions::quantize`), fp32 LoRA merge on the CPU stream, fp32 GDN
 //! state. One causal row per call, with a single-slot state-prefix cache:
 //! a repeated state pays only for its question branches (exact by
 //! construction — the state's activations do not depend on the branches).
 
 use crate::error::{KevError, Result};
+use crate::runtime::{MlxOptions, Quantization};
 use mlx_rs::{
     error::Exception,
     fast,
@@ -73,29 +75,79 @@ struct Prefix {
     layers: Vec<LayerState>,
 }
 
+/// A projection weight `[out, in]`: as stored, or MLX affine-quantized
+/// (`w` packed, with per-group `scales` and `biases`).
+enum Linear {
+    Dense(Array),
+    Quantized {
+        w: Array,
+        scales: Array,
+        biases: Array,
+        group_size: i32,
+        bits: i32,
+    },
+}
+
+impl Linear {
+    fn new(weight: Array, quantize: Option<Quantization>) -> AnyResult<Self> {
+        let Some(q) = quantize else {
+            return Ok(Linear::Dense(weight));
+        };
+        let (w, scales, biases) = ops::quantize(&weight, q.group_size, q.bits)?;
+        eval([&w, &scales, &biases])?;
+        Ok(Linear::Quantized {
+            w,
+            scales,
+            biases,
+            group_size: q.group_size,
+            bits: q.bits,
+        })
+    }
+
+    /// Rows `ids` of the matrix, dense — the embedding lookup.
+    fn rows(&self, ids: &Array) -> AnyResult<Array> {
+        Ok(match self {
+            Linear::Dense(w) => w.take_axis(ids, 0)?,
+            Linear::Quantized {
+                w,
+                scales,
+                biases,
+                group_size,
+                bits,
+            } => ops::dequantize(
+                &w.take_axis(ids, 0)?,
+                &scales.take_axis(ids, 0)?,
+                &biases.take_axis(ids, 0)?,
+                *group_size,
+                *bits,
+            )?,
+        })
+    }
+}
+
 /// Weights of one transformer block, resolved once at load so the forward
 /// pass never touches a name map.
 struct AttnWeights {
-    q_proj: Array,
-    k_proj: Array,
-    v_proj: Array,
-    o_proj: Array,
+    q_proj: Linear,
+    k_proj: Linear,
+    v_proj: Linear,
+    o_proj: Linear,
     q_norm: Array,
     k_norm: Array,
 }
 
 struct GdnWeights {
-    in_proj_qkv: Array,
-    in_proj_z: Array,
-    in_proj_b: Array,
-    in_proj_a: Array,
+    in_proj_qkv: Linear,
+    in_proj_z: Linear,
+    in_proj_b: Linear,
+    in_proj_a: Linear,
     conv1d: Array,
     /// Precomputed `-exp(A_log.astype(f32))` — a weight-only constant that
     /// upstream recomputes inside `compute_g` every call.
     neg_exp_a_log: Array,
     dt_bias: Array,
     norm: Array,
-    out_proj: Array,
+    out_proj: Linear,
 }
 
 enum Mixer {
@@ -160,14 +212,19 @@ struct Block {
     input_ln: Array,
     mixer: Mixer,
     post_ln: Array,
-    gate_proj: Array,
-    up_proj: Array,
-    down_proj: Array,
+    gate_proj: Linear,
+    up_proj: Linear,
+    down_proj: Linear,
 }
 
 pub struct MlxBackbone {
     config: TextConfig,
-    embed: Array,
+    embed: Linear,
+    /// The compute dtype (the stored weights'), kept apart from `embed`,
+    /// whose packed form is integer when quantized.
+    dtype: Dtype,
+    /// Tokens per state pass (`MlxOptions::state_chunk`); None = one pass.
+    state_chunk: Option<usize>,
     blocks: Vec<Block>,
     final_norm: Array,
     /// Scalar constants in the compute dtype: q scale (dk^-1) and k scale
@@ -245,7 +302,17 @@ struct AdapterConfig {
     trainable_token_indices: Option<serde_json::Value>,
 }
 
-fn merge_lora(weights: &mut HashMap<String, Array>, adapter_dir: &Path) -> AnyResult<usize> {
+/// Fold the LoRA into its target weights (fp32, on the CPU stream). With
+/// `quantize`, each merged weight is quantized as soon as it exists and its
+/// dense form dropped, into `quantized`, so the full-precision model is
+/// never resident at once — merging everything first and quantizing after
+/// held both copies (Kev-4B: 13 GB of footprint for a 4.4 GiB model).
+fn merge_lora(
+    weights: &mut HashMap<String, Array>,
+    adapter_dir: &Path,
+    quantize: Option<Quantization>,
+    quantized: &mut HashMap<String, Linear>,
+) -> AnyResult<usize> {
     let config: AdapterConfig = serde_json::from_str(&std::fs::read_to_string(
         adapter_dir.join("adapter_config.json"),
     )?)?;
@@ -287,8 +354,16 @@ fn merge_lora(weights: &mut HashMap<String, Array>, adapter_dir: &Path) -> AnyRe
                 .as_dtype(Dtype::Float32)?
                 .add(&delta)?
                 .as_dtype(base.dtype())?;
-            eval([&out])?;
-            weights.insert(target, out);
+            if quantize.is_some() {
+                weights.remove(&target);
+                quantized.insert(target, Linear::new(out, quantize)?);
+                if merged % 16 == 15 {
+                    mlx_rs::memory::clear_cache()?;
+                }
+            } else {
+                eval([&out])?;
+                weights.insert(target, out);
+            }
             merged += 1;
         }
         Ok(())
@@ -299,8 +374,17 @@ fn merge_lora(weights: &mut HashMap<String, Array>, adapter_dir: &Path) -> AnyRe
 
 // ----------------------------------------------------------------- forward --
 
-fn linear(x: &Array, weight: &Array) -> AnyResult<Array> {
-    Ok(ops::matmul(x, &ops::swap_axes(weight, -1, -2)?)?)
+fn linear(x: &Array, weight: &Linear) -> AnyResult<Array> {
+    Ok(match weight {
+        Linear::Dense(w) => ops::matmul(x, &ops::swap_axes(w, -1, -2)?)?,
+        Linear::Quantized {
+            w,
+            scales,
+            biases,
+            group_size,
+            bits,
+        } => ops::quantized_matmul(x, w, scales, biases, true, *group_size, *bits)?,
+    })
 }
 
 fn silu(x: &Array) -> AnyResult<Array> {
@@ -308,25 +392,54 @@ fn silu(x: &Array) -> AnyResult<Array> {
 }
 
 impl MlxBackbone {
-    pub fn load(base_dir: &Path, adapter_dir: &Path, pad_id: u32) -> Result<Self> {
+    pub fn load(
+        base_dir: &Path,
+        adapter_dir: &Path,
+        pad_id: u32,
+        options: MlxOptions,
+    ) -> Result<Self> {
+        if let Some(q) = options.quantize {
+            if !matches!(q.bits, 4 | 8) || !matches!(q.group_size, 32 | 64 | 128) {
+                return Err(KevError::Load(format!(
+                    "unsupported quantization {q:?} (bits 4|8, group size 32|64|128)"
+                )));
+            }
+        }
+        if options.state_chunk == Some(0) {
+            return Err(KevError::Load("state_chunk must be positive".into()));
+        }
         let raw = std::fs::read_to_string(base_dir.join("config.json"))
             .map_err(|e| KevError::Load(e.to_string()))?;
         let top: TopConfig =
             serde_json::from_str(&raw).map_err(|e| KevError::Load(format!("config.json: {e}")))?;
         let mut weights =
             load_base(base_dir).map_err(|e| KevError::Load(format!("base weights: {e}")))?;
-        merge_lora(&mut weights, adapter_dir)
+        let mut quantized = HashMap::new();
+        merge_lora(&mut weights, adapter_dir, options.quantize, &mut quantized)
             .map_err(|e| KevError::Load(format!("lora merge: {e}")))?;
         let kernel = crate::gdn_kernel::GdnKernel::new()?;
 
         let cfg = &top.text_config;
-        let mut take = |name: String| -> Result<Array> {
+        let weights = RefCell::new(weights);
+        let quantized = RefCell::new(quantized);
+        let take = |name: String| -> Result<Array> {
             weights
+                .borrow_mut()
                 .remove(&name)
                 .ok_or_else(|| KevError::Load(format!("missing weight {name}")))
         };
         let embed = take("embed_tokens.weight".into())?;
         let dtype = embed.dtype();
+        let q = options.quantize;
+        // A projection: already quantized during the merge, or (not a LoRA
+        // target, or no quantization) taken as stored and quantized if asked.
+        let lin = |name: String| -> Result<Linear> {
+            if let Some(linear) = quantized.borrow_mut().remove(&name) {
+                return Ok(linear);
+            }
+            Linear::new(take(name)?, q).map_err(|e| KevError::Load(format!("quantize: {e}")))
+        };
+        let embed = Linear::new(embed, q).map_err(|e| KevError::Load(format!("quantize: {e}")))?;
         let mut blocks = Vec::with_capacity(cfg.num_hidden_layers);
         for layer in 0..cfg.num_hidden_layers {
             let p = format!("layers.{layer}");
@@ -339,22 +452,22 @@ impl MlxBackbone {
                 })()
                 .map_err(|e| KevError::Load(format!("A_log: {e}")))?;
                 Mixer::Gdn(GdnWeights {
-                    in_proj_qkv: take(format!("{p}.linear_attn.in_proj_qkv.weight"))?,
-                    in_proj_z: take(format!("{p}.linear_attn.in_proj_z.weight"))?,
-                    in_proj_b: take(format!("{p}.linear_attn.in_proj_b.weight"))?,
-                    in_proj_a: take(format!("{p}.linear_attn.in_proj_a.weight"))?,
+                    in_proj_qkv: lin(format!("{p}.linear_attn.in_proj_qkv.weight"))?,
+                    in_proj_z: lin(format!("{p}.linear_attn.in_proj_z.weight"))?,
+                    in_proj_b: lin(format!("{p}.linear_attn.in_proj_b.weight"))?,
+                    in_proj_a: lin(format!("{p}.linear_attn.in_proj_a.weight"))?,
                     conv1d: take(format!("{p}.linear_attn.conv1d.weight"))?,
                     neg_exp_a_log,
                     dt_bias: take(format!("{p}.linear_attn.dt_bias"))?,
                     norm: take(format!("{p}.linear_attn.norm.weight"))?,
-                    out_proj: take(format!("{p}.linear_attn.out_proj.weight"))?,
+                    out_proj: lin(format!("{p}.linear_attn.out_proj.weight"))?,
                 })
             } else {
                 Mixer::Attn(AttnWeights {
-                    q_proj: take(format!("{p}.self_attn.q_proj.weight"))?,
-                    k_proj: take(format!("{p}.self_attn.k_proj.weight"))?,
-                    v_proj: take(format!("{p}.self_attn.v_proj.weight"))?,
-                    o_proj: take(format!("{p}.self_attn.o_proj.weight"))?,
+                    q_proj: lin(format!("{p}.self_attn.q_proj.weight"))?,
+                    k_proj: lin(format!("{p}.self_attn.k_proj.weight"))?,
+                    v_proj: lin(format!("{p}.self_attn.v_proj.weight"))?,
+                    o_proj: lin(format!("{p}.self_attn.o_proj.weight"))?,
                     q_norm: take(format!("{p}.self_attn.q_norm.weight"))?,
                     k_norm: take(format!("{p}.self_attn.k_norm.weight"))?,
                 })
@@ -363,12 +476,18 @@ impl MlxBackbone {
                 input_ln: take(format!("{p}.input_layernorm.weight"))?,
                 mixer,
                 post_ln: take(format!("{p}.post_attention_layernorm.weight"))?,
-                gate_proj: take(format!("{p}.mlp.gate_proj.weight"))?,
-                up_proj: take(format!("{p}.mlp.up_proj.weight"))?,
-                down_proj: take(format!("{p}.mlp.down_proj.weight"))?,
+                gate_proj: lin(format!("{p}.mlp.gate_proj.weight"))?,
+                up_proj: lin(format!("{p}.mlp.up_proj.weight"))?,
+                down_proj: lin(format!("{p}.mlp.down_proj.weight"))?,
             });
         }
         let final_norm = take("norm.weight".into())?;
+        if q.is_some() {
+            // The dense weights each quantized projection replaced were freed
+            // into MLX's allocator cache; hand them back, or the process keeps
+            // the bf16 footprint the quantization was meant to shed.
+            mlx_rs::memory::clear_cache().map_err(|e| KevError::Load(e.to_string()))?;
+        }
 
         let inv_scale = (cfg.linear_key_head_dim as f32).powf(-0.5);
         let make_const = |value: f32| -> Result<Array> {
@@ -379,6 +498,8 @@ impl MlxBackbone {
         Ok(Self {
             config: top.text_config,
             embed,
+            dtype,
+            state_chunk: options.state_chunk,
             blocks,
             final_norm,
             q_scale: make_const(inv_scale * inv_scale)?,
@@ -403,7 +524,7 @@ impl MlxBackbone {
         let cfg = &self.config;
         let conv_dim = 2 * cfg.linear_num_key_heads * cfg.linear_key_head_dim
             + cfg.linear_num_value_heads * cfg.linear_value_head_dim;
-        let embed_dtype = self.embed.dtype();
+        let embed_dtype = self.dtype;
         (0..cfg.num_hidden_layers)
             .map(|layer| {
                 Ok(if cfg.is_linear(layer) {
@@ -460,7 +581,7 @@ impl MlxBackbone {
         let ids_arr = Array::from_slice(&ids_i32, &[(rows.len() * l) as i32]);
         let mut h = self
             .embed
-            .take_axis(&ids_arr, 0)?
+            .rows(&ids_arr)?
             .reshape(&[b, l as i32, cfg.hidden_size])?;
 
         for (block, state) in self.blocks.iter().zip(states.iter_mut()) {
@@ -666,7 +787,19 @@ impl MlxBackbone {
             .is_some_and(|p| p.state_ids == state_ids);
         if !hit {
             let mut states = self.fresh_states()?;
-            self.forward(&[state_ids.to_vec()], &mut states, 0)?;
+            // In chunks when asked: each chunk continues the carried states
+            // at its rope offset, evaluated before the next so only one
+            // chunk's activations are ever live.
+            let chunk = self.state_chunk.unwrap_or(state_ids.len()).max(1);
+            for (i, piece) in state_ids.chunks(chunk).enumerate() {
+                self.forward(&[piece.to_vec()], &mut states, (i * chunk) as i32)?;
+                if state_ids.len() > chunk {
+                    eval(states.iter().flat_map(|s| match s {
+                        LayerState::Kv { keys, values } => [keys, values],
+                        LayerState::Gdn { conv_tail, state } => [conv_tail, state],
+                    }))?;
+                }
+            }
             self.prefix = Some(Prefix {
                 state_ids: state_ids.to_vec(),
                 layers: states,

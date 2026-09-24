@@ -7,6 +7,25 @@ release workflow.
 
 ## [Unreleased]
 
+### Added
+
+- `LoadOptions::mlx` (`MlxOptions`), MLX-only memory options, both off by
+  default so the reference path is unchanged:
+  - `quantize: Some(Quantization::Q8)` — MLX affine 8-bit (group size 32)
+    for every projection and the embedding, each weight quantized right
+    after its fp32 LoRA merge so the bf16 model is never resident at once.
+    Kev-4B: 4.41 GiB after load (bf16 6.65), inference peak 5.44 GiB
+    (8.61), same latency. Gated by `mlx_q8_vs_fp32` in `tolerances.json`.
+  - `state_chunk: Some(n)` — a new state runs through the backbone `n`
+    tokens at a time, bounding activation memory on long states. Exact
+    with fp32 weights (1.4e-6); bf16 boundary rounding is gated by
+    `state_chunk_vs_single_pass`.
+- `kev-bench`: `KEV_BENCH_Q8`, `KEV_BENCH_STATE_CHUNK`, and MLX memory
+  reporting (active / cache after load, inference peak).
+- Gated tests `mlx_q8_parity_kev_0_8b`, `mlx_q8_parity_kev_4b`,
+  `mlx_state_chunks_match_single_pass_kev_0_8b`; `check_backend` prints each
+  near-tie flip's top-2 gap.
+
 ## [0.1.1] - 2026-09-24
 
 Documentation-only release so the pinned tag carries documentation that

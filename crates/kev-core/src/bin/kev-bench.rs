@@ -9,6 +9,9 @@
 //! every pass).
 //!
 //! Usage: kev-bench <checkpoint> <cpu|metal> [out.json]
+//!
+//! `KEV_BENCH_Q8=1` loads with `Quantization::Q8`; `KEV_BENCH_STATE_CHUNK=N`
+//! runs states in N-token chunks (MLX memory options, off by default).
 
 #[cfg(any(feature = "mlx", feature = "candle"))]
 fn main() -> anyhow::Result<()> {
@@ -80,12 +83,40 @@ fn main() -> anyhow::Result<()> {
     )?)?;
     let request: kev_core::SystemOneRequest = serde_json::from_value(fixture["request"].clone())?;
 
+    let mlx = kev_core::runtime::MlxOptions {
+        quantize: std::env::var_os("KEV_BENCH_Q8").map(|_| kev_core::runtime::Quantization::Q8),
+        state_chunk: std::env::var("KEV_BENCH_STATE_CHUNK")
+            .ok()
+            .and_then(|n| n.parse().ok()),
+    };
     let mut runtime = Runtime::load(&LoadOptions {
         model_dir,
         device,
         temperature: None,
+        mlx,
     })?;
     let (enc, _metas) = runtime.encode_request(&request)?;
+    #[cfg(feature = "mlx")]
+    let gib = |bytes: usize| bytes as f64 / (1u64 << 30) as f64;
+    #[cfg(feature = "mlx")]
+    {
+        let rss_now = || -> f64 {
+            std::process::Command::new("ps")
+                .args(["-o", "rss=", "-p", &std::process::id().to_string()])
+                .output()
+                .ok()
+                .and_then(|o| String::from_utf8(o.stdout).ok())
+                .and_then(|s| s.trim().parse::<f64>().ok())
+                .map_or(0.0, |kb| kb / (1u64 << 20) as f64)
+        };
+        eprintln!(
+            "memory after load: mlx active {:.2} GiB, mlx cache {:.2} GiB, process RSS {:.2} GiB",
+            gib(mlx_rs::memory::active_memory()?),
+            gib(mlx_rs::memory::cache_memory()?),
+            rss_now()
+        );
+        mlx_rs::memory::reset_peak_memory()?;
+    }
 
     let warmup = 3usize;
     let iterations = 20usize;
@@ -147,6 +178,11 @@ fn main() -> anyhow::Result<()> {
         "new_state": stats(&new_state),
         "repeated_state": stats(&repeated_state),
     });
+    #[cfg(feature = "mlx")]
+    eprintln!(
+        "memory during inference: mlx peak {:.2} GiB",
+        gib(mlx_rs::memory::peak_memory()?)
+    );
     let rendered = serde_json::to_string_pretty(&result)?;
     println!("{rendered}");
     if let Some(path) = out_path {

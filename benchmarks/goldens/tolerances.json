@@ -28,5 +28,22 @@
     }
   },
   "mlx_vs_fp32_evidence": "Gates follow upstream's own published envelope at the pinned commit, not our smaller fixture set: Kev-4B max |dp| 0.025242, mean 0.0016, 1 flip in 1264 questions (runs/r4-mlx-parity-4b/report.json; test_mlx.py asserts max < 0.03); Kev-0.8B max 0.0542, mean 0.0023, 4 flips (runs/r4-mlx-parity-0.8b). A flip is tolerable only on an fp32 near-tie (top-2 gap < 0.02), upstream's rule. Measured here (30 questions): 0.8B max 0.0141, mean 0.0026, 1 flip at gap 0.004.",
-  "note_kev-0.6b": "kev-0.6b (Qwen3, attention-only) has no MLX path (upstream refuses it) and no fitted temperature (serves at T=1.0). Its goldens are torch fp32 only."
+  "note_kev-0.6b": "kev-0.6b (Qwen3, attention-only) has no MLX path (upstream refuses it) and no fitted temperature (serves at T=1.0). Its goldens are torch fp32 only.",
+  "mlx_q8_vs_fp32": {
+    "kev-0.8b": {
+      "max_abs_dp": 0.15,
+      "mean_abs_dp": 0.01,
+      "flip_top2_gap": 0.02
+    },
+    "kev-4b": {
+      "max_abs_dp": 0.15,
+      "mean_abs_dp": 0.01,
+      "flip_top2_gap": 0.02
+    }
+  },
+  "mlx_q8_vs_fp32_evidence": "Amendment 2026-09-24, recorded before any Rust q8 result was inspected: a new configuration (MLX affine 8-bit, group size 32, projections and embedding quantized after the fp32 LoRA merge; opt-in via LoadOptions.mlx.quantize) gets its own gate rather than relaxing mlx_vs_fp32. Basis: a Python mlx-lm prototype of the same scheme on kev.js's PyTorch fixtures measured per-question max |dp| mean 0.009 (0.8B, 49 questions, no flips) and 0.0046 (4B, 29 questions, one flip at gap 0.016, as bf16). Group size 64 flipped a 4B answer at gap 0.057 and 4-bit flipped answers at gaps up to 0.34; neither is offered. Measured here (after the gate was recorded): kev-0.8b 30 questions, max |dp| 0.0143, mean 0.0045, flips at two near-ties (gap 0.0040; 0.0094, one question present in four fixtures); kev-4b 10 questions, max 0.0086, mean 0.0025, no flips. Memory (kev-bench, M4 Pro): kev-4b MLX active 4.41 GiB after load vs 6.65 bf16, inference peak 5.44 vs 8.61 GiB, whole-run footprint 6.8 vs 10.3 GB; kev-0.8b 0.79 vs 0.93 GiB active, 1.43 vs 2.04 GiB peak. Latency unchanged within 5%.",
+  "state_chunk_vs_single_pass": {
+    "mlx": 0.02
+  },
+  "state_chunk_vs_single_pass_evidence": "Amendment 2026-09-24. The gate first recorded (0.01, before any result) failed on its first run: 16-token chunks vs one pass measured max |dp| 0.0108 on kev-0.8b, no argmax flip. It is amended here after inspection, and says so. Evidence that the carry logic is exact and the difference is bf16 rounding at chunk boundaries: with the weights cast to fp32 (a local diagnostic, not a shipped option) the same comparison measures 1.4e-6 (16-token chunks) and 1.1e-6 (64); in bf16, 0.0108 (16) and 0.0086 (64) — the mechanism behind packed_vs_separate's MLX bound. Gate: max |dp| 0.02, argmax flips: none allowed."
 }
