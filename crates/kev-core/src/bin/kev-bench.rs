@@ -12,6 +12,27 @@
 //!
 //! `KEV_BENCH_Q8=1` loads with `Quantization::Q8`; `KEV_BENCH_STATE_CHUNK=N`
 //! runs states in N-token chunks (MLX memory options, off by default).
+//! Q8 is off when unset, empty, or `0`; any other non-empty value enables it.
+//! The state chunk must be a positive integer; invalid values are errors.
+
+#[cfg(any(test, feature = "mlx", feature = "candle"))]
+fn parse_mlx_options(
+    q8: Option<&str>,
+    state_chunk: Option<&str>,
+) -> anyhow::Result<kev_core::runtime::MlxOptions> {
+    Ok(kev_core::runtime::MlxOptions {
+        quantize: q8
+            .filter(|v| !v.is_empty() && *v != "0")
+            .map(|_| kev_core::runtime::Quantization::Q8),
+        state_chunk: state_chunk
+            .map(|n| {
+                n.parse().map_err(|_| {
+                    anyhow::anyhow!("KEV_BENCH_STATE_CHUNK must be a positive integer, got {n:?}")
+                })
+            })
+            .transpose()?,
+    })
+}
 
 #[cfg(any(feature = "mlx", feature = "candle"))]
 fn main() -> anyhow::Result<()> {
@@ -32,6 +53,9 @@ fn main() -> anyhow::Result<()> {
         "metal" => Device::Metal,
         other => anyhow::bail!("unknown device {other}"),
     };
+    let q8 = std::env::var("KEV_BENCH_Q8").ok();
+    let state_chunk = std::env::var("KEV_BENCH_STATE_CHUNK").ok();
+    let mlx = parse_mlx_options(q8.as_deref(), state_chunk.as_deref())?;
 
     let root = Path::new(env!("CARGO_MANIFEST_DIR"))
         .ancestors()
@@ -83,12 +107,6 @@ fn main() -> anyhow::Result<()> {
     )?)?;
     let request: kev_core::SystemOneRequest = serde_json::from_value(fixture["request"].clone())?;
 
-    let mlx = kev_core::runtime::MlxOptions {
-        quantize: std::env::var_os("KEV_BENCH_Q8").map(|_| kev_core::runtime::Quantization::Q8),
-        state_chunk: std::env::var("KEV_BENCH_STATE_CHUNK")
-            .ok()
-            .and_then(|n| n.parse().ok()),
-    };
     let mut runtime = Runtime::load(&LoadOptions {
         model_dir,
         device,
@@ -196,4 +214,67 @@ fn main() -> anyhow::Result<()> {
 fn main() {
     eprintln!("kev-bench needs the mlx or candle feature");
     std::process::exit(2);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::parse_mlx_options;
+    use kev_core::runtime::{MlxOptions, Quantization};
+
+    #[test]
+    fn unset_options_use_the_reference_path() {
+        assert_eq!(
+            parse_mlx_options(None, None).unwrap(),
+            MlxOptions::default()
+        );
+    }
+
+    #[test]
+    fn q8_empty_and_zero_are_off() {
+        for value in ["", "0"] {
+            assert_eq!(
+                parse_mlx_options(Some(value), None).unwrap().quantize,
+                None,
+                "KEV_BENCH_Q8={value:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn q8_nonempty_nonzero_values_enable_quantization() {
+        for value in ["1", "true"] {
+            assert_eq!(
+                parse_mlx_options(Some(value), None).unwrap().quantize,
+                Some(Quantization::Q8),
+                "KEV_BENCH_Q8={value:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn chunk_size_can_be_combined_with_q8() {
+        assert_eq!(
+            parse_mlx_options(Some("1"), Some("16")).unwrap(),
+            MlxOptions {
+                quantize: Some(Quantization::Q8),
+                state_chunk: Some(16),
+            }
+        );
+        assert_eq!(
+            parse_mlx_options(Some("0"), Some("1")).unwrap().state_chunk,
+            Some(1)
+        );
+    }
+
+    #[test]
+    fn invalid_chunk_sizes_fail_with_the_setting_and_value() {
+        let overflow = format!("{}0", usize::MAX);
+        for value in ["", "abc", "-1", "1.5", overflow.as_str()] {
+            let error = parse_mlx_options(None, Some(value)).unwrap_err();
+            assert_eq!(
+                error.to_string(),
+                format!("KEV_BENCH_STATE_CHUNK must be a positive integer, got {value:?}")
+            );
+        }
+    }
 }

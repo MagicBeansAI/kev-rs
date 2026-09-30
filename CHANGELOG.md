@@ -7,6 +7,12 @@ release workflow.
 
 ## [Unreleased]
 
+### Changed
+
+- **Breaking:** `LoadOptions` gains a required `mlx: MlxOptions` field.
+  Downstream struct literals must add `mlx: Default::default()` to keep
+  the reference path, or set explicit MLX memory options.
+
 ### Added
 
 - `LoadOptions::mlx` (`MlxOptions`), MLX-only memory options, both off by
